@@ -2,7 +2,10 @@ import './style.css';
 import { createBackground } from './scene.js';
 import { createMacroRing, MACRO_COLORS } from './ring3d.js';
 import { calculate, paceHint } from './calc.js';
-import { allowedFoods, buildSampleDay, coachTips, foodGuide, supplements } from './foods.js';
+import { allowedFoods, buildSampleDay, coachTips, foodGuide, supplements, REGIONS, regionInfo } from './foods.js';
+
+import { bodyErrors } from './validation.js';
+import { renderBodyFatCards } from './bodyfat.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -22,6 +25,8 @@ const state = {
   diet: 'omnivore',
   carbStyle: 'balanced',
   seed: 1,
+  bodyFatSource: 'manual',
+  sampleDay: null,
   result: null,
 };
 
@@ -31,6 +36,16 @@ function setSeg(name, value) {
   if (!wrap) return;
   $$('button', wrap).forEach((b) => b.classList.toggle('on', b.dataset.v === value));
   state[name] = value;
+  if (name === 'sex') {
+    renderBodyFatCards($('#bodyFatCards'), value);
+    if (state.bodyFatSource === 'visual') {
+      $('#bodyFatOn').checked = false;
+      $('#bodyFat').disabled = true;
+      state.bodyFatSource = 'manual';
+      updateBf();
+      $('#bodyFatSelection').textContent = 'Guide updated. Select a new range or leave body fat off.';
+    }
+  }
   if (name === 'goal') onGoal();
   if (name === 'pace') updatePaceHint();
 }
@@ -65,13 +80,41 @@ bindRange('meals');
 const updateBf = bindRange('bodyFat', (v) => `${v}%`);
 $('#bodyFatOn').addEventListener('change', (e) => {
   $('#bodyFat').disabled = !e.target.checked;
+  state.bodyFatSource = 'manual';
+  syncBodyFatSelection();
   updateBf();
 });
+
+// ---------- Region and approximate visual body-fat guide ----------
+$('#region').innerHTML = Object.entries(REGIONS).map(([value, r]) => `<option value="${value}">${r.label}</option>`).join('');
+const updateRegion = () => { $('#regionHint').textContent = regionInfo($('#region').value).note; };
+$('#region').addEventListener('change', updateRegion);
+updateRegion();
+renderBodyFatCards($('#bodyFatCards'), state.sex);
+function syncBodyFatSelection() {
+  $$('#bodyFatCards button').forEach((b) => b.setAttribute('aria-pressed', String(
+    $('#bodyFatOn').checked && state.bodyFatSource === 'visual' && b.dataset.bf === $('#bodyFat').value
+  )));
+  $('#bodyFatSelection').textContent = !$('#bodyFatOn').checked ? 'Body fat is off. The planner will use a formula estimate.'
+    : state.bodyFatSource === 'visual' ? `Using an approximate visual estimate of ${$('#bodyFat').value}%. You can fine-tune the slider.`
+    : `Using your entered value of ${$('#bodyFat').value}%.`;
+}
+$('#bodyFatCards').addEventListener('click', (e) => {
+  const button = e.target.closest('[data-bf]');
+  if (!button) return;
+  $('#bodyFatOn').checked = true;
+  $('#bodyFat').disabled = false;
+  $('#bodyFat').value = button.dataset.bf;
+  state.bodyFatSource = 'visual';
+  updateBf();
+  syncBodyFatSelection();
+});
+$('#bodyFat').addEventListener('input', syncBodyFatSelection);
 
 // ---------- Units ----------
 function heightCm() {
   const num = (id) => parseFloat($(`#${id}`).value);
-  if (state.hUnit === 'ft') return (num('heightFt') * 12 + (num('heightFtIn') || 0)) * 2.54;
+  if (state.hUnit === 'ft') return (num('heightFt') * 12 + num('heightFtIn')) * 2.54;
   return num('heightCm');
 }
 const formatHeight = (cm) => {
@@ -102,8 +145,11 @@ function setHeightUnit(unit, convert = true) {
       $('#heightFtIn').value = rounded % 12;
     }
   }
+  if (changed && !Number.isFinite(cm)) {
+    ['heightCm', 'heightFt', 'heightFtIn'].forEach((id) => { $(`#${id}`).value = ''; });
+  }
   syncUnitUI();
-  if (changed && state.result) generate(false);
+  if (convert) updateWizardValidation();
 }
 $('[data-unit="height"]').addEventListener('click', (e) => {
   const b = e.target.closest('button');
@@ -122,10 +168,15 @@ function showStep(i) {
   $('#progressBar').style.width = `${((i + 1) / steps.length) * 100}%`;
   $('#prevBtn').disabled = i === 0;
   $('#nextBtn').innerHTML = i === steps.length - 1 ? 'Generate plan <i>⚡</i>' : 'Next <i>→</i>';
+  updateWizardValidation();
 }
 $$('#stepsNav li').forEach((li, k) =>
   li.addEventListener('click', () => {
-    if (k <= state.step || validate()) showStep(k);
+    if (k <= state.step) showStep(k);
+    else if (validate()) {
+      if (k === state.step + 1) showStep(k);
+      else toast('Complete each step in order');
+    }
   })
 );
 $('#prevBtn').addEventListener('click', () => showStep(Math.max(0, state.step - 1)));
@@ -152,24 +203,49 @@ function readInput() {
     pace: state.pace,
     target: Number.isFinite(target) ? target : NaN,
     diet: state.diet,
+    region: $('#region').value,
+    bodyFatSource: $('#bodyFatOn').checked ? state.bodyFatSource : 'formula',
     meals: num('meals'),
     carbStyle: state.carbStyle,
   };
 }
 
+const bodyFields = ['age', 'weight', 'heightCm', 'heightFt', 'heightFtIn'];
+const touched = new Set();
+function currentErrors() {
+  return bodyErrors(Object.fromEntries(bodyFields.map((id) => [id, $(`#${id}`).value])), state.hUnit);
+}
+function updateWizardValidation(reveal = false) {
+  const errors = currentErrors();
+  bodyFields.forEach((id) => {
+    const input = $(`#${id}`);
+    const message = (reveal || touched.has(id)) ? errors[id] || '' : '';
+    input.classList.toggle('err', !!message);
+    input.setAttribute('aria-invalid', String(!!message));
+    $(`#${id}Error`).textContent = message;
+  });
+  const targetInvalid = state.step >= 2 && !$('#target').validity.valid;
+  $('#nextBtn').disabled = !!Object.keys(errors).length || targetInvalid;
+  $('#wizardStatus').textContent = Object.keys(errors).length ? 'Enter a valid age, weight and height to continue. Body fat is optional.'
+    : targetInvalid ? 'Enter a target weight between 30 and 300 kg, or leave it empty.' : '';
+  return !$('#nextBtn').disabled;
+}
+$('#form').addEventListener('submit', (e) => e.preventDefault());
+$('#form').addEventListener('input', (e) => {
+  touched.add(e.target.id);
+  updateWizardValidation();
+});
+$('#form').addEventListener('focusout', (e) => {
+  touched.add(e.target.id);
+  updateWizardValidation();
+});
 function validate() {
-  const i = readInput();
-  const errs = [];
-  if (!(i.age >= 14 && i.age <= 90)) errs.push('age');
-  if (!(i.weight >= 30 && i.weight <= 300)) errs.push('weight');
-  if (!(i.height >= 120 && i.height <= 230)) errs.push(state.hUnit === 'ft' ? 'heightFt' : 'heightCm');
-  $$('.step input').forEach((el) => el.classList.remove('err'));
-  errs.forEach((id) => $(`#${id}`).classList.add('err'));
-  if (errs.length) {
-    showStep(0);
-    toast('Please check the highlighted fields');
+  const valid = updateWizardValidation(true);
+  if (!valid) {
+    if (Object.keys(currentErrors()).length) showStep(0);
+    toast('Please complete the required details with valid values');
   }
-  return !errs.length;
+  return valid;
 }
 
 function toast(msg) {
@@ -202,10 +278,13 @@ function countUp(el, to, dur = 1200) {
 }
 
 function generate(scroll) {
+  if (!validate()) return;
   const input = readInput();
   const r = calculate(input);
   state.result = r;
-  localStorage.setItem(STORE, JSON.stringify({ ...state, result: null, inputs: snapshotInputs() }));
+  try {
+    localStorage.setItem(STORE, JSON.stringify({ ...state, result: null, sampleDay: null, inputs: snapshotInputs() }));
+  } catch { /* Storage may be unavailable in private browsing. */ }
 
   $('#results').classList.remove('hidden');
   $('.nav-results').classList.remove('hidden');
@@ -247,7 +326,7 @@ function generate(scroll) {
 
   const bmiCat = r.bmi < 18.5 ? 'Under' : r.bmi < 25 ? 'Normal' : r.bmi < 30 ? 'Over' : 'Obese';
   $('#metrics').innerHTML = [
-    ['Body fat', `${r.bodyFat}%`, r.bfKnown ? 'your input' : 'estimated'],
+    ['Body fat', `${r.bodyFat}%`, r.input.bodyFatSource === 'visual' ? 'visual estimate' : r.bfKnown ? 'your input' : 'formula estimate'],
     ['Lean mass', fmtW(r.lbm), 'fat-free mass'],
     ['BMI', r.bmi, bmiCat],
     ['FFMI', r.ffmi, r.ffmi > 23 ? 'very muscular' : r.ffmi > 20 ? 'above avg' : 'room to grow'],
@@ -343,10 +422,10 @@ function renderMeals(r) {
 }
 
 function renderFoods(r, tab) {
-  const g = foodGuide(r.input.goal)[tab];
+  const g = foodGuide(r.input.goal, r.input.diet, r.input.region)[tab];
   let html = g.map(([a, b]) => `<div class="food ${tab}"><b>${a}</b><p>${b}</p></div>`).join('');
   if (tab === 'eat') {
-    const top = allowedFoods(r.input.diet)
+    const top = allowedFoods(r.input.diet, r.input.region)
       .filter((f) => f.role === 'protein')
       .map((f) => ({ ...f, density: (f.p * 4) / (f.p * 4 + f.c * 4 + f.f * 9) }))
       .sort((a, b) => b.density - a.density);
@@ -365,6 +444,8 @@ $('#foodTabs').addEventListener('click', (e) => {
 
 function renderSample(r) {
   const day = buildSampleDay(r, state.seed);
+  state.sampleDay = day;
+  $('#sampleRegion').textContent = `${regionInfo(r.input.region).label} · ${r.input.diet} · Weights are cooked / ready-to-eat, except oats and powders (dry). Approximate portions; totals may differ from targets.`;
   const tot = day.reduce((a, m) => ({ p: a.p + m.total.p, c: a.c + m.total.c, f: a.f + m.total.f, kcal: a.kcal + m.total.kcal }), { p: 0, c: 0, f: 0, kcal: 0 });
   $('#sampleDay').innerHTML =
     day
@@ -383,13 +464,37 @@ $('#shuffleBtn').addEventListener('click', () => {
   if (!state.result) return;
   state.seed = Math.floor(Math.random() * 1e9);
   renderSample(state.result);
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE));
+    if (saved) localStorage.setItem(STORE, JSON.stringify({ ...saved, seed: state.seed }));
+  } catch { /* The current plan and export still work if storage is unavailable. */ }
 });
 
 $('#editBtn').addEventListener('click', () => $('#plan').scrollIntoView({ behavior: 'smooth' }));
-$('#printBtn').addEventListener('click', () => window.print());
+$('#printBtn').addEventListener('click', async () => {
+  if (!state.result || !state.sampleDay) return;
+  const button = $('#printBtn');
+  const result = state.result;
+  const day = state.sampleDay;
+  button.disabled = true;
+  button.textContent = 'Preparing PDF…';
+  $('#exportStatus').textContent = 'Preparing your current plan and sample meals…';
+  try {
+    const { createPlanPdf } = await import('./pdf.js');
+    const doc = createPlanPdf(result, day);
+    doc.save(`MacroForge-${result.input.goal}-${result.input.region}-${new Date().toISOString().slice(0, 10)}.pdf`);
+    $('#exportStatus').textContent = 'PDF download started. It contains your last generated plan and displayed sample day.';
+  } catch (error) {
+    console.error('PDF export failed', error);
+    $('#exportStatus').textContent = 'Could not create the PDF. Please try downloading again.';
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Download PDF';
+  }
+});
 
 // ---------- Persistence ----------
-const INPUT_IDS = ['age', 'weight', 'heightCm', 'heightFt', 'heightFtIn', 'bodyFat', 'days', 'target', 'meals'];
+const INPUT_IDS = ['age', 'weight', 'heightCm', 'heightFt', 'heightFtIn', 'bodyFat', 'days', 'target', 'meals', 'region'];
 function snapshotInputs() {
   return Object.fromEntries([...INPUT_IDS.map((id) => [id, $(`#${id}`).value]), ['bodyFatOn', $('#bodyFatOn').checked]]);
 }
@@ -399,6 +504,7 @@ function restore() {
     if (!saved) return false;
     if (saved.wUnit && saved.wUnit !== 'kg') return false;
     setHeightUnit(saved.hUnit, false);
+    state.seed = Number.isInteger(saved.seed) ? saved.seed : 1;
     Object.entries(saved.inputs || {}).forEach(([id, v]) => {
       const el = $(`#${id}`);
       if (!el) return;
@@ -407,7 +513,10 @@ function restore() {
     });
     $('#bodyFat').disabled = !$('#bodyFatOn').checked;
     ['sex', 'activity', 'style', 'goal', 'pace', 'diet', 'carbStyle'].forEach((k) => saved[k] && setSeg(k, saved[k]));
+    updateRegion();
     $$('input[type=range]').forEach((el) => el.dispatchEvent(new Event('input')));
+    state.bodyFatSource = saved.bodyFatSource === 'visual' ? 'visual' : 'manual';
+    syncBodyFatSelection();
     return true;
   } catch {
     return false;

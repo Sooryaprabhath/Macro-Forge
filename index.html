@@ -102,11 +102,13 @@
             <div class="grid-2">
               <div class="field">
                 <label for="age">Age <em>years</em></label>
-                <input id="age" name="age" type="number" min="14" max="90" value="25" required />
+                <input id="age" aria-describedby="ageError" name="age" type="number" min="14" max="90" placeholder="e.g. 25" required />
+                <p class="field-error" id="ageError"></p>
               </div>
               <div class="field">
                 <label for="weight">Weight <em>kg</em></label>
-                <input id="weight" name="weight" type="number" min="30" max="400" step="0.1" value="75" required />
+                <input id="weight" aria-describedby="weightError" name="weight" type="number" min="30" max="300" step="0.1" placeholder="e.g. 75" required />
+                <p class="field-error" id="weightError"></p>
               </div>
             </div>
 
@@ -119,26 +121,36 @@
                 </div>
               </div>
               <div class="height-metric">
-                <input id="heightCm" name="heightCm" type="number" min="120" max="230" value="175" />
+                <input id="heightCm" aria-describedby="heightCmError" name="heightCm" type="number" min="120" max="230" placeholder="e.g. 175" required />
+                <p class="field-error" id="heightCmError"></p>
               </div>
               <div class="height-feet grid-2">
                 <div class="suffix-input" data-suffix="ft">
-                  <input id="heightFt" name="heightFt" type="number" min="3" max="7" step="1" value="5" aria-label="Feet" />
+                  <input id="heightFt" aria-describedby="heightFtError" name="heightFt" type="number" min="3" max="7" step="1" placeholder="Feet" required aria-label="Feet" />
+                <p class="field-error" id="heightFtError"></p>
                 </div>
                 <div class="suffix-input" data-suffix="in">
-                  <input id="heightFtIn" name="heightFtIn" type="number" min="0" max="11" step="1" value="9" aria-label="Inches" />
+                  <input id="heightFtIn" aria-describedby="heightFtInError" name="heightFtIn" type="number" min="0" max="11" step="1" placeholder="Inches" required aria-label="Inches" />
+                <p class="field-error" id="heightFtInError"></p>
                 </div>
               </div>
             </div>
 
             <div class="field">
-              <label for="bodyFat">Body fat <em>% · optional, improves accuracy</em></label>
+              <label for="bodyFat">Body fat <em>% · optional, measured or estimated</em></label>
               <div class="range-wrap">
-                <input id="bodyFatOn" type="checkbox" class="switch" />
+                <input id="bodyFatOn" aria-label="Use a body fat value" type="checkbox" class="switch" />
                 <input id="bodyFat" name="bodyFat" type="range" min="5" max="45" value="18" disabled />
                 <output id="bodyFatOut">—</output>
               </div>
             </div>
+            <details class="bf-guide" id="bodyFatGuide">
+              <summary>Not sure? Explore the body-fat visual guide</summary>
+              <p class="hint">Compare the same character across different body shapes. These AI-generated adult illustrations are approximate references, not measured bodies or a validated body-fat test. Muscle, posture and fat distribution affect appearance. Select a rough range only if helpful, then adjust the slider.</p>
+              <div class="bf-grid" id="bodyFatCards" aria-label="Approximate body fat ranges"></div>
+              <p class="hint" id="bodyFatSelection" role="status">No visual estimate selected. You can leave body fat off.</p>
+              <a class="guide-source" href="https://health.clevelandclinic.org/bmi-for-men" target="_blank" rel="noopener noreferrer">About body composition measurements ↗</a>
+            </details>
           </fieldset>
 
           <!-- STEP 2 -->
@@ -198,13 +210,19 @@
             </div>
             <div class="field">
               <label for="target">Target weight <em>kg</em> <em>· optional</em></label>
-              <input id="target" name="target" type="number" min="30" max="400" step="0.1" placeholder="e.g. 70" />
+              <input id="target" name="target" type="number" min="30" max="300" step="0.1" placeholder="e.g. 70" />
             </div>
           </fieldset>
 
           <!-- STEP 4 -->
           <fieldset class="step" data-step="3">
             <legend>Diet preferences</legend>
+            <div class="field">
+              <label for="region">Where do you live / shop?</label>
+              <select id="region" name="region" aria-describedby="regionHint"></select>
+              <p class="hint" id="regionHint"></p>
+              <p class="hint">Choose your closest food region. Your diet choice below always applies.</p>
+            </div>
             <div class="field">
               <label>Diet type</label>
               <div class="seg wrap" data-name="diet">
@@ -231,9 +249,10 @@
             </div>
           </fieldset>
 
+          <p class="hint wizard-status" id="wizardStatus" role="status" aria-live="polite"></p>
           <div class="wizard-actions">
             <button type="button" class="btn ghost" id="prevBtn" disabled>← Back</button>
-            <button type="button" class="btn primary" id="nextBtn">Next <i>→</i></button>
+            <button type="button" class="btn primary" id="nextBtn" aria-describedby="wizardStatus" disabled>Next <i>→</i></button>
           </div>
         </form>
       </section>
@@ -315,6 +334,7 @@
               <p class="tile-label">Sample day of eating</p>
               <button class="chip" id="shuffleBtn" type="button">Shuffle ↻</button>
             </div>
+            <p class="hint sample-note" id="sampleRegion"></p>
             <div id="sampleDay" class="sample-day"></div>
           </article>
 
@@ -343,8 +363,9 @@
 
         <div class="results-actions">
           <button class="btn ghost" id="editBtn" type="button">← Edit my data</button>
-          <button class="btn primary" id="printBtn" type="button">Save / Print plan</button>
+          <button class="btn primary" id="printBtn" type="button">Download PDF</button>
         </div>
+        <p id="exportStatus" class="hint export-status" role="status" aria-live="polite"></p>
         <p class="disclaimer">
           Estimates only — not medical advice. Re‑check every 2–3 weeks and adjust calories by ±100–200 kcal based
           on your real‑world progress.

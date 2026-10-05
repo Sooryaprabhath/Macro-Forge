@@ -50,7 +50,23 @@ const ALLOWED = {
   vegan: ['vegan'],
 };
 
-export const allowedFoods = (diet) => FOODS.filter((f) => ALLOWED[diet].includes(f.diet));
+// User-selected shopping region, not nationality or an inferred dietary restriction.
+export const REGIONS = {
+  global: { label: 'Global / other', note: 'A broad selection. Choose the foods available in your local shops.' },
+  southAsia: { label: 'South Asia (India & neighbours)', note: 'Rice, dal, roti, soy chunks and paneer, matched to your diet.', foods: /chicken|prawns|eggs|paneer|tofu|soy chunks|protein|rice|oats|roti|lentils|banana|almonds|peanut|spinach|green beans|peppers/i },
+  eastAsia: { label: 'East & Southeast Asia', note: 'Rice, tofu, tempeh, fish and greens, matched to your diet.', foods: /chicken|salmon|tuna|prawns|eggs|tofu|tempeh|protein|rice|oats|sweet potato|banana|peanut|spinach|green beans|peppers/i },
+  middleEast: { label: 'Middle East & North Africa', note: 'Lentils, rice, yogurt, olive oil and fresh vegetables.', foods: /chicken|beef|tuna|eggs|yogurt|cottage|tofu|protein|rice|oats|roti|lentils|banana|olive|almonds|walnuts|spinach|salad|peppers/i },
+  europe: { label: 'Europe', note: 'Potatoes, oats, pasta, dairy, beans and seasonal vegetables.', foods: /chicken|beef|salmon|tuna|turkey|eggs|yogurt|cottage|tofu|seitan|protein|oats|potatoes|pasta|lentils|berries|banana|olive|walnuts|broccoli|spinach|salad|green beans/i },
+  americas: { label: 'North America & Oceania', note: 'Oats, potatoes, lean proteins, tofu, fruit and vegetables.', foods: /chicken|beef|salmon|tuna|turkey|eggs|yogurt|cottage|tofu|tempeh|protein|rice|oats|potato|pasta|quinoa|banana|berries|olive|peanut|avocado|chia|broccoli|salad|peppers/i },
+  latinAmerica: { label: 'Latin America & Caribbean', note: 'Rice, potatoes, lentils, avocado and locally available proteins.', foods: /chicken|beef|tuna|prawns|eggs|cottage|tofu|protein|rice|oats|potato|quinoa|lentils|banana|peanut|avocado|olive|spinach|salad|peppers/i },
+  africa: { label: 'Sub-Saharan Africa', note: 'Rice, sweet potato, lentils, peanuts, greens and familiar proteins.', foods: /chicken|beef|tuna|eggs|yogurt|tofu|soy chunks|protein|rice|oats|potato|lentils|banana|peanut|avocado|spinach|green beans|peppers/i },
+};
+
+export const regionInfo = (region) => REGIONS[region] || REGIONS.global;
+export const allowedFoods = (diet, region = 'global') => {
+  const local = regionInfo(region).foods;
+  return FOODS.filter((f) => (ALLOWED[diet] || ALLOWED.omnivore).includes(f.diet) && (!local || local.test(f.name)));
+};
 
 const kcalOf = (f) => f.p * 4 + f.c * 4 + f.f * 9;
 
@@ -78,7 +94,7 @@ function mulberry32(seed) {
 // when a food hits its cap, it is locked and a second food of the same role is added.
 export function buildSampleDay(result, seed = 1) {
   const rnd = mulberry32(seed);
-  const foods = allowedFoods(result.input.diet);
+  const foods = allowedFoods(result.input.diet, result.input.region);
   const isShake = (f) => f.name === 'Whey protein' || f.name === 'Pea protein';
   const pick = (role, filter = () => true) => shuffle(foods.filter((f) => f.role === role && !isShake(f) && filter(f)), rnd);
   const lists = {
@@ -99,7 +115,7 @@ export function buildSampleDay(result, seed = 1) {
     if (!noVeg) fixed.push({ food: lists.veg[i % lists.veg.length], g: 120 });
     if (/breakfast|snack|pre-workout/i.test(meal.name) && lists.fruit.length) fixed.push({ food: lists.fruit[i % lists.fruit.length], g: 120 });
 
-    const carbList = light ? lists.snackCarb : lists.carb;
+    const carbList = light && lists.snackCarb.length ? lists.snackCarb : lists.carb;
     const shakeMeal = shake && /post-workout$|snack|bed/i.test(meal.name);
     const vars = [
       { role: 'protein', list: shakeMeal ? [shake, ...lists.protein] : lists.protein, idx: 0, off: shakeMeal ? 0 : i },
@@ -211,7 +227,18 @@ const GUIDE = {
   },
 };
 
-export const foodGuide = (goal) => GUIDE[goal];
+export const foodGuide = (goal, diet = 'omnivore', region = 'global') => {
+  const foods = allowedFoods(diet, region);
+  const names = (roles) => foods.filter((f) => roles.includes(f.role) && !/protein$/i.test(f.name)).map((f) => f.name).join(', ');
+  return { ...GUIDE[goal], eat: [
+    ['Protein near you', names(['protein']) + '.'],
+    ['Everyday carb sources', names(['carb']) + '.'],
+    ['Fats & extras', names(['fat']) + '. Measure portions to suit your target.'],
+    ['Fruit & vegetables', names(['fruit', 'veg']) + '. Choose seasonal alternatives when available.'],
+    ['Your shopping region', regionInfo(region).label + '. Suggestions above follow your selected diet. Availability varies by town and shop; this is a starting point.'],
+    ['Make it yours', 'Use the sample portions as a guide. Brands, recipes and cooking methods change nutrition values.'],
+  ] };
+};
 
 export function coachTips(r) {
   const { goal, days, pace, sex } = r.input;
