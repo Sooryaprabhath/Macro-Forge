@@ -158,17 +158,31 @@ $('[data-unit="height"]').addEventListener('click', (e) => {
 
 // ---------- Wizard ----------
 const steps = $$('.step');
-function showStep(i) {
+function scrollToPlanner() {
+  const heading = $('.step.active legend');
+  heading.tabIndex = -1;
+  heading.focus({ preventScroll: true });
+  // Wait for the new fieldset to affect layout, including a shorter next step.
+  requestAnimationFrame(() => {
+    const headerBottom = $('.nav').getBoundingClientRect().bottom;
+    const top = $('#form').getBoundingClientRect().top + window.scrollY - headerBottom - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
+  });
+}
+function showStep(i, scroll = true) {
   state.step = i;
   steps.forEach((s, k) => s.classList.toggle('active', k === i));
   $$('#stepsNav li').forEach((li, k) => {
     li.classList.toggle('active', k === i);
     li.classList.toggle('done', k < i);
+    if (k === i) li.setAttribute('aria-current', 'step');
+    else li.removeAttribute('aria-current');
   });
   $('#progressBar').style.width = `${((i + 1) / steps.length) * 100}%`;
   $('#prevBtn').disabled = i === 0;
   $('#nextBtn').innerHTML = i === steps.length - 1 ? 'Generate plan <i>⚡</i>' : 'Next <i>→</i>';
   updateWizardValidation();
+  if (scroll) scrollToPlanner();
 }
 $$('#stepsNav li').forEach((li, k) =>
   li.addEventListener('click', () => {
@@ -470,7 +484,7 @@ $('#shuffleBtn').addEventListener('click', () => {
   } catch { /* The current plan and export still work if storage is unavailable. */ }
 });
 
-$('#editBtn').addEventListener('click', () => $('#plan').scrollIntoView({ behavior: 'smooth' }));
+$('#editBtn').addEventListener('click', () => showStep(0));
 $('#printBtn').addEventListener('click', async () => {
   if (!state.result || !state.sampleDay) return;
   const button = $('#printBtn');
@@ -534,6 +548,7 @@ function revealAll() {
 revealAll();
 
 document.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'mouse' || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   const el = e.target.closest('.tilt, .tile');
   $$('.tilting').forEach((x) => x !== el && (x.classList.remove('tilting'), (x.style.transform = '')));
   if (!el) return;
@@ -549,5 +564,5 @@ document.addEventListener('pointermove', (e) => {
 syncUnitUI();
 const hadSaved = restore();
 onGoal();
-showStep(0);
+showStep(0, false);
 if (hadSaved) generate(false);
