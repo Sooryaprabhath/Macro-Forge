@@ -55,3 +55,13 @@ After generating a plan, use **Save a check-in or compare progress** to open the
 History uses a separate versioned browser-storage key (`macroforge:checkins:v1`); it does not overwrite older check-ins or add records on reload. Identical values on the same date are deduplicated, while changed values are retained as separate records. Body-fat changes are flagged when methods or sex settings differ. No historical date is inferred from a previously saved plan.
 
 Records stay on that browser/device and are lost if its storage is cleared. **Download check-in data** exports JSON for personal recordkeeping; import/sync is not implemented. Storage errors are shown without replacing existing history.
+
+## How the estimates work and where food data comes from
+
+The header info icon opens [the user-facing explanation](public/readme.html), served as `readme.html`. It covers energy equations, app-specific adjustments, macros, regional filtering, meal generation, projection assumptions and local storage.
+
+Calculations are implemented in `src/calc.js`: the published Mifflin–St Jeor adult resting-energy equation, a separately documented lifestyle/training assumption, and a goal adjustment using a fixed 7,700 kcal/kg heuristic. Macro rules and projections remain app-specific estimates. Pregnancy, breastfeeding, users under 18 and medical nutrition management are outside the calculator's supported scope.
+
+`src/food-data.js` contains 33 curated records imported from USDA FoodData Central Foundation Foods 2025-12-18 and SR Legacy 2018-04. Each record carries its FDC ID, dataset/version, retrieval date, preparation state, serving weight, energy, macros, fibre and available micronutrients; unavailable values remain `null`. Regenerate it from official JSON downloads with `scripts/import-food-data.mjs`. The IFCT 2017 PDF was obtained but no Indian values were imported because extraction could not be independently verified.
+
+`src/recipes.js` implements edible-weight, nutrient-retention and final-yield recipe calculations following FAO/INFOODS structure. Standardized Indian dishes are not published until their ingredient records, measured yields and applicable retention factors are verified. See [EVIDENCE.md](EVIDENCE.md) and `data/import-manifest.json` for the rule-to-source map and exact import status.

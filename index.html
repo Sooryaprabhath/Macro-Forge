@@ -30,6 +30,7 @@
             <input id="backgroundBlur" type="range" min="0" max="20" step="1" value="0" aria-describedby="backgroundBlurValue" />
           </div>
         </details>
+        <a class="nav-info" href="./readme.html" aria-label="About MacroForge: calculations and food data" title="Calculations &amp; food data"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r=".8" fill="currentColor" stroke="none"/></svg></a>
       </nav>
     </header>
 
@@ -51,7 +52,7 @@
             <a href="#how" class="btn ghost">How it works</a>
           </div>
           <div class="hero-stats">
-            <div><b>Mifflin‑St Jeor</b><span>&amp; Katch‑McArdle BMR</span></div>
+            <div><b>Mifflin‑St Jeor</b><span>adult resting energy</span></div>
             <div><b>3 goals</b><span>Cut · Maintain · Bulk</span></div>
             <div><b>12‑week</b><span>body projection</span></div>
           </div>
@@ -87,7 +88,7 @@
           <h2>Your body. Your data.</h2>
         </div>
 
-        <form id="form" class="glass wizard" novalidate>
+        <form id="form" class="glass wizard" novalidate autocomplete="off">
           <div class="progress"><span id="progressBar"></span></div>
           <ol class="steps-nav" id="stepsNav">
             <li class="active">Body</li>
@@ -106,11 +107,21 @@
                 <button type="button" data-v="female">Female</button>
               </div>
             </div>
+            <div class="field">
+              <label for="applicability">Planner applicability</label>
+              <select id="applicability" name="applicability" aria-describedby="applicabilityHint">
+                <option value="standard">Adult, not pregnant or breastfeeding</option>
+                <option value="pregnant">Pregnant</option>
+                <option value="breastfeeding">Breastfeeding</option>
+                <option value="medical">Medical nutrition management required</option>
+              </select>
+              <p class="hint" id="applicabilityHint">This research-based estimate is for generally healthy adults. Other selections require an appropriately qualified clinician.</p>
+            </div>
 
             <div class="grid-2">
               <div class="field">
                 <label for="age">Age <em>years</em></label>
-                <input id="age" aria-describedby="ageError" name="age" type="number" min="14" max="90" placeholder="e.g. 25" required />
+                <input id="age" aria-describedby="ageError" name="age" type="number" min="18" max="90" placeholder="e.g. 25" required />
                 <p class="field-error" id="ageError"></p>
               </div>
               <div class="field">
@@ -240,6 +251,24 @@
                 <button type="button" data-v="vegan">Vegan</button>
               </div>
             </div>
+            <fieldset class="field constraint-field">
+              <legend>Allergies to exclude</legend>
+              <div class="constraint-grid">
+                <label><input type="checkbox" name="allergen" value="milk" /> Milk</label>
+                <label><input type="checkbox" name="allergen" value="egg" /> Egg</label>
+                <label><input type="checkbox" name="allergen" value="fish" /> Fish</label>
+                <label><input type="checkbox" name="allergen" value="shellfish" /> Shellfish</label>
+                <label><input type="checkbox" name="allergen" value="peanut" /> Peanut</label>
+                <label><input type="checkbox" name="allergen" value="tree_nut" /> Tree nuts</label>
+                <label><input type="checkbox" name="allergen" value="soy" /> Soy</label>
+                <label><input type="checkbox" name="allergen" value="wheat" /> Wheat</label>
+              </div>
+              <p class="hint">Records are filtered by reviewed ingredient-level allergen tags. Cross-contact and brand-specific warnings remain unknown.</p>
+            </fieldset>
+            <div class="field">
+              <label for="excludedFoods">Other ingredients to exclude <em>comma separated</em></label>
+              <input id="excludedFoods" name="excludedFoods" type="text" placeholder="e.g. banana, tuna" />
+            </div>
             <div class="field">
               <label for="meals">Meals per day</label>
               <div class="range-wrap">
@@ -279,7 +308,7 @@
             <p class="tile-label">Daily calories</p>
             <div class="big"><span id="kcal">0</span><small>kcal</small></div>
             <div class="kcal-row">
-              <div><span>BMR</span><b id="bmr">–</b></div>
+              <div><span>Resting estimate</span><b id="bmr">–</b></div>
               <div><span>Maintenance</span><b id="tdee">–</b></div>
               <div><span id="deltaLabel">Adjustment</span><b id="delta">–</b></div>
             </div>

@@ -10,7 +10,7 @@ export function bodyErrors(values, unit = 'cm') {
     }
     return n;
   };
-  check('age', 14, 90, 'your age', true);
+  check('age', 18, 90, 'your age', true);
   check('weight', 30, 300, 'your weight in kg');
   if (unit === 'ft') {
     const ft = check('heightFt', 3, 7, 'feet', true);

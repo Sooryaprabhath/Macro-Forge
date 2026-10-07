@@ -253,6 +253,9 @@ function readInput() {
     bodyFatSource: $('#bodyFatOn').checked ? state.bodyFatSource : 'formula',
     meals: num('meals'),
     carbStyle: state.carbStyle,
+    applicability: $('#applicability').value,
+    allergens: $$('input[name="allergen"]:checked').map((el) => el.value),
+    excludedFoods: $('#excludedFoods').value.split(',').map((value) => value.trim()).filter(Boolean),
   };
 }
 
@@ -271,9 +274,11 @@ function updateWizardValidation(reveal = false) {
     $(`#${id}Error`).textContent = message;
   });
   const targetInvalid = state.step >= 2 && !$('#target').validity.valid;
-  $('#nextBtn').disabled = !!Object.keys(errors).length || targetInvalid;
+  const unsupported = $('#applicability').value !== 'standard';
+  $('#nextBtn').disabled = !!Object.keys(errors).length || targetInvalid || unsupported;
   $('#wizardStatus').textContent = Object.keys(errors).length ? 'Enter a valid age, weight and height to continue. Body fat is optional.'
-    : targetInvalid ? 'Enter a target weight between 30 and 300 kg, or leave it empty.' : '';
+    : targetInvalid ? 'Enter a target weight between 30 and 300 kg, or leave it empty.'
+    : unsupported ? 'MacroForge does not calculate targets for pregnancy, breastfeeding, or medical nutrition management. Please use a qualified clinician.' : '';
   return !$('#nextBtn').disabled;
 }
 $('#form').addEventListener('submit', (e) => e.preventDefault());
@@ -469,7 +474,8 @@ function renderMeals(r) {
 }
 
 function renderFoods(r, tab) {
-  const guide = foodGuide(r.input.goal, r.input.diet, r.input.region);
+  const constraints = { allergens: r.input.allergens || [], excluded: r.input.excludedFoods || [] };
+  const guide = foodGuide(r.input.goal, r.input.diet, r.input.region, constraints);
   const g = guide[tab];
   // Browser Print / Save as PDF must include every category, not just this tab.
   $('#printFoodGuide').innerHTML = FOOD_GUIDE_SECTIONS.map(([key, label]) =>
@@ -478,7 +484,7 @@ function renderFoods(r, tab) {
   ).join('');
   let html = g.map(([a, b]) => `<div class="food ${tab}"><b>${a}</b><p>${b}</p></div>`).join('');
   if (tab === 'eat') {
-    const top = allowedFoods(r.input.diet, r.input.region)
+    const top = allowedFoods(r.input.diet, r.input.region, constraints)
       .filter((f) => f.role === 'protein')
       .map((f) => ({ ...f, density: (f.p * 4) / (f.p * 4 + f.c * 4 + f.f * 9) }))
       .sort((a, b) => b.density - a.density);
@@ -496,22 +502,29 @@ $('#foodTabs').addEventListener('click', (e) => {
 });
 
 function renderSample(r) {
-  const day = buildSampleDay(r, state.seed);
+  let day;
+  try { day = buildSampleDay(r, state.seed); }
+  catch (error) {
+    state.sampleDay = null;
+    $('#sampleRegion').textContent = error.message;
+    $('#sampleDay').innerHTML = '<div class="sd-total"><span>No meal plan generated</span><em>Relax one or more exclusions, or choose another diet or region.</em></div>';
+    return;
+  }
   state.sampleDay = day;
   $('#sampleRegion').textContent = `${regionInfo(r.input.region).label} · ${r.input.diet} · Weights are cooked / ready-to-eat, except oats and powders (dry). Approximate portions; totals may differ from targets.`;
-  const tot = day.reduce((a, m) => ({ p: a.p + m.total.p, c: a.c + m.total.c, f: a.f + m.total.f, kcal: a.kcal + m.total.kcal }), { p: 0, c: 0, f: 0, kcal: 0 });
+  const tot = day.reduce((a, m) => ({ p: a.p + m.total.p, c: a.c + m.total.c, f: a.f + m.total.f, kcal: a.kcal + m.total.kcal, fibre: a.fibre + m.total.fibre }), { p: 0, c: 0, f: 0, kcal: 0, fibre: 0 });
   $('#sampleDay').innerHTML =
     day
       .map(
         (m) => `
       <div class="sd-meal">
         <div class="sd-head"><b>${m.name}</b><span>${m.total.kcal} kcal</span></div>
-        <ul>${m.items.map((it) => `<li><span>${it.name}</span><em>${it.grams} g</em></li>`).join('')}</ul>
+        <ul>${m.items.map((it) => `<li><span>${it.name}<small>${it.state} · ${it.sourceName} ${it.sourceId}</small></span><em>${it.grams} g</em></li>`).join('')}</ul>
         <div class="chips">${macroChips(m.total)}</div>
       </div>`
       )
       .join('') +
-    `<div class="sd-total"><span>Day total</span><b>${tot.kcal.toLocaleString()} kcal</b><div class="chips">${macroChips(tot)}</div><em>Target ${r.calories.toLocaleString()} kcal · P${r.protein} C${r.carbs} F${r.fat}</em></div>`;
+    `<div class="sd-total"><span>Day total</span><b>${tot.kcal.toLocaleString()} kcal</b><div class="chips">${macroChips(tot)}</div><em>${tot.fibre} g food-derived fibre · Target ${r.calories.toLocaleString()} kcal · P${r.protein} C${r.carbs} F${r.fat}</em></div>`;
 }
 $('#shuffleBtn').addEventListener('click', () => {
   if (!state.result) return;
@@ -547,9 +560,10 @@ $('#printBtn').addEventListener('click', async () => {
 });
 
 // ---------- Persistence ----------
-const INPUT_IDS = ['age', 'weight', 'heightCm', 'heightFt', 'heightFtIn', 'bodyFat', 'days', 'target', 'meals', 'region'];
+const INPUT_IDS = ['age', 'weight', 'heightCm', 'heightFt', 'heightFtIn', 'bodyFat', 'days', 'target', 'meals', 'region', 'applicability', 'excludedFoods'];
 function snapshotInputs() {
-  return Object.fromEntries([...INPUT_IDS.map((id) => [id, $(`#${id}`).value]), ['bodyFatOn', $('#bodyFatOn').checked]]);
+  return Object.fromEntries([...INPUT_IDS.map((id) => [id, $(`#${id}`).value]), ['bodyFatOn', $('#bodyFatOn').checked],
+    ['allergens', $$('input[name="allergen"]:checked').map((el) => el.value)]]);
 }
 function restore() {
   try {
@@ -559,6 +573,7 @@ function restore() {
     setHeightUnit(saved.hUnit, false);
     state.seed = Number.isInteger(saved.seed) ? saved.seed : 1;
     Object.entries(saved.inputs || {}).forEach(([id, v]) => {
+      if (id === 'allergens') { $$('input[name="allergen"]').forEach((el) => { el.checked = v.includes(el.value); }); return; }
       const el = $(`#${id}`);
       if (!el) return;
       if (el.type === 'checkbox') el.checked = v;
@@ -602,7 +617,5 @@ document.addEventListener('pointermove', (e) => {
 // ---------- Init ----------
 progress = createProgress(() => state.result, () => showStep(0));
 syncUnitUI();
-const hadSaved = restore();
 onGoal();
 showStep(0, false);
-if (hadSaved) generate(false);

@@ -167,7 +167,7 @@ export function createPlanPdf(r, day, date = new Date()) {
     text(String(index + 1).padStart(2, '0'), left + 4, y + 1.5, 9, true, accent, { align: 'center' });
     text(meal.name, left + 12, y + 1.5, 12, true);
     text(`${meal.total.kcal} kcal`, left + width, y + 1.5, 10, true, accent, { align: 'right' }); y += 12;
-    table(['Food', 'Portion'], meal.items.map((it) => [it.name, `${it.grams} g`]), [140, 34], { compact: true });
+    table(['Food · preparation · source', 'Portion'], meal.items.map((it) => [`${it.name} · ${it.state || 'unknown'} · ${it.sourceName || 'unknown source'} ${it.sourceId || ''}`, `${it.grams} g`]), [140, 34], { compact: true });
     paragraph(`Protein ${meal.total.p} g | Carbs ${meal.total.c} g | Fat ${meal.total.f} g`, { size: 9, gap: 4 });
   });
   const total = day.reduce((sum, meal) => Object.fromEntries(Object.keys(sum).map((key) => [key, sum[key] + meal.total[key]])), { kcal: 0, p: 0, c: 0, f: 0 });

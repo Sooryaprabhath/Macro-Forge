@@ -1,0 +1,8 @@
+{
+  "generatedOn": "2026-10-08",
+  "imports": [
+    { "source": "USDA FoodData Central Foundation Foods", "version": "2025-12-18", "status": "imported", "records": 16, "format": "official JSON archive" },
+    { "source": "USDA FoodData Central SR Legacy", "version": "2018-04", "status": "imported", "records": 17, "format": "official JSON archive" },
+    { "source": "Indian Food Composition Tables", "version": "ICMR-NIN 2017", "status": "awaiting verified extraction", "records": 0, "reason": "The official PDF was obtained, but table extraction and representative record verification could not be completed with the available tooling. No values were copied or inferred." }
+  ]
+}

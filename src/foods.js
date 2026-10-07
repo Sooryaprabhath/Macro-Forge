@@ -1,47 +1,16 @@
-// Per 100 g (cooked/ready-to-eat where relevant). diet: meat | egg | vegetarian | vegan
-export const FOODS = [
-  // Protein
-  { name: 'Chicken breast', max: 300, role: 'protein', diet: 'meat', p: 31, c: 0, f: 3.6 },
-  { name: 'Lean beef (5% fat)', max: 280, role: 'protein', diet: 'meat', p: 26, c: 0, f: 6 },
-  { name: 'Salmon', max: 250, role: 'protein', diet: 'meat', p: 22, c: 0, f: 12 },
-  { name: 'Tuna (in water)', max: 250, role: 'protein', diet: 'meat', p: 25, c: 0, f: 1 },
-  { name: 'Turkey mince', max: 280, role: 'protein', diet: 'meat', p: 27, c: 0, f: 7 },
-  { name: 'Shrimp / prawns', max: 300, role: 'protein', diet: 'meat', p: 24, c: 0.2, f: 0.3 },
-  { name: 'Whole eggs + whites', max: 300, role: 'protein', diet: 'egg', p: 12.5, c: 0.8, f: 6 },
-  { name: 'Greek yogurt (0%)', max: 400, role: 'protein', diet: 'vegetarian', p: 10, c: 3.6, f: 0.4 },
-  { name: 'Cottage cheese', max: 300, role: 'protein', diet: 'vegetarian', p: 11, c: 3.4, f: 4.3 },
-  { name: 'Paneer (low fat)', max: 200, role: 'protein', diet: 'vegetarian', p: 20, c: 3, f: 13 },
-  { name: 'Whey protein', max: 60, role: 'protein', diet: 'vegetarian', p: 78, c: 8, f: 6 },
-  { name: 'Firm tofu', max: 300, role: 'protein', diet: 'vegan', p: 15, c: 2.5, f: 8 },
-  { name: 'Tempeh', max: 200, role: 'protein', diet: 'vegan', p: 19, c: 9, f: 11 },
-  { name: 'Seitan', max: 200, role: 'protein', diet: 'vegan', p: 25, c: 14, f: 2 },
-  { name: 'Soy chunks (cooked)', max: 250, role: 'protein', diet: 'vegan', p: 17, c: 11, f: 0.5 },
-  { name: 'Pea protein', max: 60, role: 'protein', diet: 'vegan', p: 80, c: 4, f: 7 },
-  // Carbs
-  { name: 'White / basmati rice', max: 400, role: 'carb', diet: 'vegan', p: 2.7, c: 28, f: 0.3 },
-  { name: 'Rolled oats (dry)', max: 120, role: 'carb', diet: 'vegan', p: 13, c: 67, f: 7 },
-  { name: 'Potatoes', max: 500, role: 'carb', diet: 'vegan', p: 2, c: 17, f: 0.1 },
-  { name: 'Sweet potato', max: 400, role: 'carb', diet: 'vegan', p: 1.6, c: 20, f: 0.1 },
-  { name: 'Wholegrain pasta', max: 350, role: 'carb', diet: 'vegan', p: 5.5, c: 27, f: 1 },
-  { name: 'Quinoa', max: 350, role: 'carb', diet: 'vegan', p: 4.4, c: 21, f: 1.9 },
-  { name: 'Wholewheat roti / bread', max: 180, role: 'carb', diet: 'vegan', p: 9, c: 45, f: 3 },
-  { name: 'Lentils / dal', max: 300, role: 'carb', diet: 'vegan', p: 9, c: 20, f: 0.4 },
-  { name: 'Banana', max: 150, role: 'fruit', diet: 'vegan', p: 1.1, c: 23, f: 0.3 },
-  { name: 'Mixed berries', max: 150, role: 'fruit', diet: 'vegan', p: 0.8, c: 12, f: 0.4 },
-  // Fats
-  { name: 'Extra-virgin olive oil', max: 20, role: 'fat', diet: 'vegan', p: 0, c: 0, f: 100 },
-  { name: 'Almonds', max: 40, role: 'fat', diet: 'vegan', p: 21, c: 22, f: 50 },
-  { name: 'Peanut butter', max: 40, role: 'fat', diet: 'vegan', p: 25, c: 20, f: 50 },
-  { name: 'Avocado', max: 150, role: 'fat', diet: 'vegan', p: 2, c: 9, f: 15 },
-  { name: 'Walnuts', max: 40, role: 'fat', diet: 'vegan', p: 15, c: 14, f: 65 },
-  { name: 'Chia seeds', max: 30, role: 'fat', diet: 'vegan', p: 17, c: 42, f: 31 },
-  // Veg (fixed portions)
-  { name: 'Broccoli', role: 'veg', diet: 'vegan', p: 2.8, c: 7, f: 0.4 },
-  { name: 'Spinach', role: 'veg', diet: 'vegan', p: 2.9, c: 3.6, f: 0.4 },
-  { name: 'Mixed salad', role: 'veg', diet: 'vegan', p: 1.5, c: 4, f: 0.2 },
-  { name: 'Green beans', role: 'veg', diet: 'vegan', p: 1.8, c: 7, f: 0.2 },
-  { name: 'Bell peppers', role: 'veg', diet: 'vegan', p: 1, c: 6, f: 0.3 },
-];
+import { FOOD_RECORDS } from './food-data.js';
+
+// Compatibility aliases keep the solver compact while every displayed value
+// remains traceable to the full record and its per-100-g nutrient definition.
+export const FOODS = FOOD_RECORDS.map((food) => ({
+  ...food,
+  p: food.nutrients.protein,
+  c: food.nutrients.carbs,
+  f: food.nutrients.fat,
+  fibre: food.nutrients.fibre,
+  kcal: food.nutrients.energy,
+  max: Math.max(food.servingGrams * 2, food.role === 'fat' ? 40 : 300),
+}));
 
 const ALLOWED = {
   omnivore: ['meat', 'egg', 'vegetarian', 'vegan'],
@@ -63,12 +32,16 @@ export const REGIONS = {
 };
 
 export const regionInfo = (region) => REGIONS[region] || REGIONS.global;
-export const allowedFoods = (diet, region = 'global') => {
+export const allowedFoods = (diet, region = 'global', constraints = {}) => {
   const local = regionInfo(region).foods;
-  return FOODS.filter((f) => (ALLOWED[diet] || ALLOWED.omnivore).includes(f.diet) && (!local || local.test(f.name)));
+  const allergens = new Set(constraints.allergens || []);
+  const excluded = (constraints.excluded || []).map((value) => value.trim().toLowerCase()).filter(Boolean);
+  return FOODS.filter((f) => (ALLOWED[diet] || ALLOWED.omnivore).includes(f.diet) && (!local || local.test(f.name))
+    && !(f.allergens || []).some((allergen) => allergens.has(allergen))
+    && !excluded.some((term) => f.name.toLowerCase().includes(term) || f.description.toLowerCase().includes(term)));
 };
 
-const kcalOf = (f) => f.p * 4 + f.c * 4 + f.f * 9;
+const kcalOf = (f) => f.kcal;
 
 const shuffle = (arr, rnd) => {
   const a = [...arr];
@@ -94,7 +67,8 @@ function mulberry32(seed) {
 // when a food hits its cap, it is locked and a second food of the same role is added.
 export function buildSampleDay(result, seed = 1) {
   const rnd = mulberry32(seed);
-  const foods = allowedFoods(result.input.diet, result.input.region);
+  const constraints = { allergens: result.input.allergens || [], excluded: result.input.excludedFoods || [] };
+  const foods = allowedFoods(result.input.diet, result.input.region, constraints);
   const isShake = (f) => f.name === 'Whey protein' || f.name === 'Pea protein';
   const pick = (role, filter = () => true) => shuffle(foods.filter((f) => f.role === role && !isShake(f) && filter(f)), rnd);
   const lists = {
@@ -105,6 +79,8 @@ export function buildSampleDay(result, seed = 1) {
     veg: pick('veg'),
     fruit: pick('fruit'),
   };
+  const missingRoles = ['protein', 'carb', 'fat', 'veg', 'fruit'].filter((role) => !lists[role]?.length);
+  if (missingRoles.length) throw new Error(`No verified ${missingRoles.join(', ')} foods satisfy all selected constraints.`);
   const shake = foods.find(isShake);
   const KEY = { protein: 'p', carb: 'c', fat: 'f' };
 
@@ -151,9 +127,11 @@ export function buildSampleDay(result, seed = 1) {
     const items = merged.map(({ food, grams }) => ({
       name: food.name, grams, kcal: Math.round((kcalOf(food) * grams) / 100),
       p: (food.p * grams) / 100, c: (food.c * grams) / 100, f: (food.f * grams) / 100,
+      fibre: Number.isFinite(food.fibre) ? (food.fibre * grams) / 100 : null,
+      state: food.state, sourceId: food.source.foodId, sourceName: food.source.name,
     }));
-    const tot = items.reduce((a, it) => ({ p: a.p + it.p, c: a.c + it.c, f: a.f + it.f, kcal: a.kcal + it.kcal }), { p: 0, c: 0, f: 0, kcal: 0 });
-    return { name: meal.name, items, total: { p: Math.round(tot.p), c: Math.round(tot.c), f: Math.round(tot.f), kcal: Math.round(tot.kcal) } };
+    const tot = items.reduce((a, it) => ({ p: a.p + it.p, c: a.c + it.c, f: a.f + it.f, kcal: a.kcal + it.kcal, fibre: a.fibre + (it.fibre || 0) }), { p: 0, c: 0, f: 0, kcal: 0, fibre: 0 });
+    return { name: meal.name, items, total: { p: Math.round(tot.p), c: Math.round(tot.c), f: Math.round(tot.f), kcal: Math.round(tot.kcal), fibre: Math.round(tot.fibre) } };
   });
 }
 
@@ -227,8 +205,8 @@ const GUIDE = {
   },
 };
 
-export const foodGuide = (goal, diet = 'omnivore', region = 'global') => {
-  const foods = allowedFoods(diet, region);
+export const foodGuide = (goal, diet = 'omnivore', region = 'global', constraints = {}) => {
+  const foods = allowedFoods(diet, region, constraints);
   const names = (roles) => foods.filter((f) => roles.includes(f.role) && !/protein$/i.test(f.name)).map((f) => f.name).join(', ');
   return { ...GUIDE[goal], eat: [
     ['Protein near you', names(['protein']) + '.'],
@@ -236,6 +214,7 @@ export const foodGuide = (goal, diet = 'omnivore', region = 'global') => {
     ['Fats & extras', names(['fat']) + '. Measure portions to suit your target.'],
     ['Fruit & vegetables', names(['fruit', 'veg']) + '. Choose seasonal alternatives when available.'],
     ['Your shopping region', regionInfo(region).label + '. Suggestions above follow your selected diet. Availability varies by town and shop; this is a starting point.'],
+    ['Verified records', 'Displayed meal calculations resolve to USDA FoodData Central records with preparation state and source ID. Cross-contact remains unknown.'],
     ['Make it yours', 'Use the sample portions as a guide. Brands, recipes and cooking methods change nutrition values.'],
   ] };
 };

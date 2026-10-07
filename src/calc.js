@@ -48,8 +48,9 @@ export function calculate(input) {
   const ffmi = lbm / (height / 100) ** 2 + 6.1 * (1.8 - height / 100);
 
   const mifflin = 10 * weight + 6.25 * height - 5 * age + (sex === 'male' ? 5 : -161);
-  const katch = 370 + 21.6 * lbm;
-  const bmr = bfKnown ? (mifflin + katch) / 2 : mifflin;
+  // Mifflin et al. (1990) estimates adult resting energy expenditure. Body-fat
+  // input informs macro planning but is not mixed into the published equation.
+  const bmr = mifflin;
 
   // Training volume nudges activity a bit beyond the lifestyle multiplier
   const styleBoost = { strength: 0.012, hybrid: 0.018, endurance: 0.025 }[style];
@@ -173,7 +174,8 @@ export function calculate(input) {
     lbm: r1(lbm),
     bmi: r1(bmi),
     ffmi: r1(ffmi),
-    bmr: Math.round(bmr),
+    ree: Math.round(bmr),
+    bmr: Math.round(bmr), // Backwards-compatible display/export field.
     tdee: Math.round(tdee),
     calories,
     delta,

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { calculate } from '../src/calc.js';
 import { allowedFoods, buildSampleDay, foodGuide, REGIONS } from '../src/foods.js';
 import { createPlanPdf, shoppingList } from '../src/pdf.js';
+import { FOOD_RECORDS } from '../src/food-data.js';
+import { calculateRecipe, validateFoodRecords } from '../src/recipes.js';
 
 const input = { sex: 'male', age: 25, weight: 75, height: 175, bodyFat: NaN, activity: 1.55, days: 4, style: 'strength', goal: 'maintain', pace: 'moderate', target: NaN, diet: 'omnivore', meals: 4, carbStyle: 'balanced', region: 'global' };
 
@@ -74,4 +76,35 @@ test('downloaded PDF contains every food-guide category and entry for all goals'
       assert.ok(text.includes(`(${escaped})`), `${goal}: missing ${title}`);
     }
   }
+});
+
+test('imported foods retain provenance, preparation state, serving weights, and unknown nutrients', () => {
+  assert.deepEqual(validateFoodRecords(FOOD_RECORDS), []);
+  assert.ok(FOOD_RECORDS.every((food) => food.source.name === 'USDA FoodData Central'));
+  assert.ok(FOOD_RECORDS.every((food) => /^\d+$/.test(food.source.foodId)));
+  assert.ok(FOOD_RECORDS.some((food) => food.nutrients.vitaminD === null));
+  assert.ok(FOOD_RECORDS.every((food) => food.nutrients.vitaminD === null || Number.isFinite(food.nutrients.vitaminD)));
+  const chicken = FOOD_RECORDS.find((food) => food.source.foodId === '331960');
+  assert.deepEqual([chicken.nutrients.energy, chicken.nutrients.protein, chicken.nutrients.fat], [166, 32.1, 3.24]);
+  const broccoli = FOOD_RECORDS.find((food) => food.source.foodId === '169967');
+  assert.deepEqual([broccoli.nutrients.energy, broccoli.nutrients.fibre, broccoli.nutrients.vitaminC], [35, 3.3, 64.9]);
+});
+
+test('recipe calculation uses edible weights, retention, cooked yield, and preserves unknowns', () => {
+  const broccoli = FOOD_RECORDS.find((food) => food.name === 'Broccoli');
+  const recipe = calculateRecipe({ id: 'test', name: 'Test', servings: 2, finalCookedWeight: 160,
+    ingredients: [{ foodId: broccoli.id, grams: 200, ediblePortion: 0.8, retention: { vitaminC: 0.5 } }] }, FOOD_RECORDS);
+  assert.equal(recipe.servingGrams, 80);
+  assert.equal(recipe.nutrientsPer100g.protein, broccoli.nutrients.protein);
+  assert.equal(recipe.nutrientsPer100g.vitaminC, broccoli.nutrients.vitaminC * 0.5);
+  if (broccoli.nutrients.vitaminD === null) assert.equal(recipe.nutrientsPer100g.vitaminD, null);
+});
+
+test('allergens and explicit exclusions are never selected', () => {
+  const foods = allowedFoods('omnivore', 'global', { allergens: ['milk', 'fish'], excluded: ['banana'] });
+  assert.ok(foods.every((food) => !food.allergens.includes('milk') && !food.allergens.includes('fish')));
+  assert.ok(foods.every((food) => !/banana/i.test(food.name)));
+  const r = calculate({ ...input, allergens: ['milk', 'fish'], excludedFoods: ['banana'] });
+  const day = buildSampleDay(r, 17);
+  assert.ok(day.flatMap((meal) => meal.items).every((item) => foods.some((food) => food.name === item.name)));
 });
