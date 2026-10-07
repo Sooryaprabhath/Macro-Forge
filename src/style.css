@@ -538,10 +538,13 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 .checkin-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 22px; }
 .checkin-actions .field { margin: 0; }
 .checkin-actions input {
-  display: block; width: 100%; max-width: 100%; min-width: 0; min-inline-size: 0;
+  display: block; box-sizing: border-box;
+  width: 100%; max-width: 100%; min-width: 0;
+  inline-size: 100%; max-inline-size: 100%; min-inline-size: 0;
   color-scheme: dark; background: #11131d; border: 1px solid var(--line);
   border-radius: 14px; padding: 14px; font: inherit; min-height: 48px;
 }
+.checkin-actions input[type='date'] { appearance: none; -webkit-appearance: none; }
 .checkin-actions input[type='date']::-webkit-date-and-time-value { text-align: left; }
 .history-empty { margin: 24px 0; padding: 20px; background: var(--b-soft); border-radius: 16px; color: var(--fg); }
 .comparison-selects { margin-top: 28px; }
@@ -557,8 +560,8 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
   .progress-history, .history-panel, .checkin-actions { min-width: 0; }
   .history-panel { width: 100%; padding: 20px 16px; }
   .checkin-actions { width: 100%; flex-direction: column; align-items: stretch; }
-  .checkin-actions .field { width: 100%; max-width: 100%; min-width: 0; }
-  .checkin-actions input { width: 100%; max-width: 100%; min-width: 0; font-size: 16px; }
+  .checkin-actions .field { width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
+  .checkin-actions input { width: 100%; max-width: 100%; min-width: 0; inline-size: 100%; max-inline-size: 100%; font-size: 16px; }
   .checkin-actions .btn, #backupCheckins { justify-content: center; width: 100%; }
   .comparison-selects { grid-template-columns: minmax(0, 1fr); }
   #comparisonValues { grid-template-columns: minmax(0, 1fr); }
