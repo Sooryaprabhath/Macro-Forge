@@ -514,3 +514,42 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
   .btn.primary:hover, .cards button:hover, .goal-cards button:hover, .meal:hover { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Saved check-ins */
+.progress-history { padding: 40px 0 60px; scroll-margin-top: 88px; }
+.history-panel { padding: 28px; }
+.history-panel h3 { font: 600 22px var(--display); }
+.checkin-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 22px; }
+.checkin-actions .field { margin: 0; }
+.checkin-actions input { color-scheme: dark; background: #11131d; border: 1px solid var(--line); border-radius: 14px; padding: 14px; font: inherit; min-height: 48px; }
+.history-empty { margin: 24px 0; padding: 20px; background: var(--b-soft); border-radius: 16px; color: var(--fg); }
+.comparison-selects { margin-top: 28px; }
+.comparison-selects .field { margin-bottom: 0; }
+.history-title { margin: 28px 0 14px; }
+.history-table { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+.history-table table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+.history-table th, .history-table td { padding: 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.history-table th { color: var(--muted); font-weight: 500; background: #151725; }
+.history-table tr:last-child td { border: 0; }
+#backupCheckins { margin-top: 22px; }
+@media screen and (max-width: 680px) {
+  .history-panel { padding: 20px 16px; }
+  .checkin-actions { flex-direction: column; align-items: stretch; }
+  .checkin-actions input { width: 100%; min-width: 0; font-size: 16px; }
+  .checkin-actions .btn, #backupCheckins { justify-content: center; width: 100%; }
+  .comparison-selects { grid-template-columns: minmax(0, 1fr); }
+  #comparisonValues { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Print the complete guide regardless of the active on-screen food tab. */
+#printFoodGuide { display: none; }
+@media print {
+  #foodTabs, #foodGrid { display: none !important; }
+  #printFoodGuide { display: block; }
+  .foods.glass { break-inside: auto; }
+  .print-food-section { width: 100%; margin: 0 0 20px; }
+  .print-food-section h3 { font-size: 18px; margin: 16px 0 10px; break-after: avoid; }
+  .print-food-entry { margin-bottom: 12px; break-inside: avoid; }
+  .print-food-entry h4 { font-size: 13px; margin-bottom: 3px; }
+  .print-food-entry p { font-size: 12px; }
+}

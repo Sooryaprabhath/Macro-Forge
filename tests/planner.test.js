@@ -60,3 +60,18 @@ test('required body details reject blanks, invalid numbers and incomplete feet/i
   assert.ok(bodyErrors({ ...valid, heightFt: '5', heightFtIn: '12' }, 'ft').heightFtIn);
   assert.deepEqual(bodyErrors({ ...valid, heightFt: '5', heightFtIn: '0' }, 'ft'), {});
 });
+
+test('downloaded PDF contains every food-guide category and entry for all goals', () => {
+  for (const goal of ['cut', 'maintain', 'bulk']) {
+    const r = calculate({ ...input, goal, region: 'southAsia', diet: 'vegan' });
+    const pdf = createPlanPdf(r, buildSampleDay(r, 1));
+    const text = pdf.internal.pages.flat().join('\n');
+    for (const heading of ['Eat more', 'Limit', 'Avoid']) assert.ok(text.includes(`(${heading})`), `${goal}: missing ${heading}`);
+    const guide = foodGuide(goal, 'vegan', 'southAsia');
+    for (const entries of Object.values(guide)) for (const [title] of entries) {
+      // PDF string literals escape parentheses.
+      const escaped = title.replace(/[()\\]/g, '\\$&');
+      assert.ok(text.includes(`(${escaped})`), `${goal}: missing ${title}`);
+    }
+  }
+});

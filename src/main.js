@@ -2,8 +2,9 @@ import './style.css';
 import { createBackground } from './scene.js';
 import { createMacroRing, MACRO_COLORS } from './ring3d.js';
 import { calculate, paceHint } from './calc.js';
-import { allowedFoods, buildSampleDay, coachTips, foodGuide, supplements, REGIONS, regionInfo } from './foods.js';
+import { allowedFoods, buildSampleDay, coachTips, foodGuide, supplements, REGIONS, regionInfo, FOOD_GUIDE_SECTIONS } from './foods.js';
 
+import { createProgress } from './progress.js';
 import { bodyErrors } from './validation.js';
 import { renderBodyFatCards } from './bodyfat.js';
 
@@ -13,6 +14,7 @@ const STORE = 'macroforge:v1';
 
 const bg = createBackground($('#bg'));
 let ring = null;
+let progress = null;
 
 const state = {
   hUnit: 'cm',
@@ -358,6 +360,7 @@ function generate(scroll) {
   $('#tips').innerHTML = coachTips(r).map((t) => `<li>${t}</li>`).join('');
   $('#supps').innerHTML = supplements(r).map(([a, b]) => `<li><b>${a}</b>${b}</li>`).join('');
 
+  progress?.refresh();
   revealAll();
   if (scroll) setTimeout(() => $('#results').scrollIntoView({ behavior: 'smooth' }), 60);
 }
@@ -436,7 +439,13 @@ function renderMeals(r) {
 }
 
 function renderFoods(r, tab) {
-  const g = foodGuide(r.input.goal, r.input.diet, r.input.region)[tab];
+  const guide = foodGuide(r.input.goal, r.input.diet, r.input.region);
+  const g = guide[tab];
+  // Browser Print / Save as PDF must include every category, not just this tab.
+  $('#printFoodGuide').innerHTML = FOOD_GUIDE_SECTIONS.map(([key, label]) =>
+    `<section class="print-food-section"><h3>${label}</h3>${guide[key].map(([title, body]) =>
+      `<div class="print-food-entry"><h4>${title}</h4><p>${body}</p></div>`).join('')}</section>`
+  ).join('');
   let html = g.map(([a, b]) => `<div class="food ${tab}"><b>${a}</b><p>${b}</p></div>`).join('');
   if (tab === 'eat') {
     const top = allowedFoods(r.input.diet, r.input.region)
@@ -561,6 +570,7 @@ document.addEventListener('pointermove', (e) => {
 });
 
 // ---------- Init ----------
+progress = createProgress(() => state.result, () => showStep(0));
 syncUnitUI();
 const hadSaved = restore();
 onGoal();

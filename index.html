@@ -263,6 +263,7 @@
           <p class="eyebrow"><span class="dot"></span>Your blueprint</p>
           <h2 id="resultsTitle">Daily targets</h2>
           <p class="sub" id="resultsSub"></p>
+          <a class="guide-source" href="#progressHistory">Save a check-in or compare progress ↓</a>
         </div>
 
         <div class="bento">
@@ -348,6 +349,7 @@
               </div>
             </div>
             <div class="food-grid" id="foodGrid"></div>
+            <div id="printFoodGuide"></div>
           </article>
 
           <article class="glass tile tips">
@@ -370,6 +372,38 @@
           Estimates only — not medical advice. Re‑check every 2–3 weeks and adjust calories by ±100–200 kcal based
           on your real‑world progress.
         </p>
+      </section>
+      <section id="progressHistory" class="progress-history">
+        <div class="section-head"><p class="eyebrow"><span class="dot"></span>Your progress</p><h2>Compare your check-ins.</h2><p class="sub">Save a starting point. Come back after your diet and see what changed.</p></div>
+        <article class="glass history-panel">
+          <div class="tile-head"><h3>Record a check-in</h3><span class="pill" id="checkinCount">0 saved check-ins</span></div>
+          <p class="hint" id="checkinPreview"></p>
+          <div class="checkin-actions">
+            <div class="field"><label for="checkinDate">Measurement date</label><input id="checkinDate" type="date" required /></div>
+            <button class="btn primary" id="saveCheckin" type="button" disabled>Save check-in</button>
+            <button class="btn ghost" id="updateMeasurements" type="button">Update my measurements</button>
+          </div>
+          <p id="checkinStatus" class="hint" role="status" aria-live="polite"></p>
+          <p class="hint">Stored only in this browser on this device. Clearing browser data removes your history. Generating plans or reloading does not add check-ins automatically.</p>
+          <p class="history-empty" id="historyEmpty">No check-ins yet. Save your current plan to start tracking.</p>
+          <p class="history-empty" id="oneCheckin" hidden>Starting point saved. Save another dated check-in after updating your measurements to see the difference.</p>
+          <div id="comparison" hidden>
+            <div class="grid-2 comparison-selects">
+              <div class="field"><label for="compareFrom">Compare from</label><select id="compareFrom"></select></div>
+              <div class="field"><label for="compareTo">Compare to</label><select id="compareTo"></select></div>
+            </div>
+            <p id="comparisonSummary" class="hint"></p>
+            <ul class="mini-grid" id="comparisonValues" aria-live="polite"></ul>
+            <p id="comparisonNote" class="hint"></p>
+          </div>
+          <div id="historyRecords" hidden>
+            <h3 class="history-title">Saved measurements</h3>
+            <div class="history-table" role="region" aria-label="Saved check-ins table, scroll horizontally on small screens" tabindex="0">
+              <table><thead><tr><th scope="col">Date</th><th scope="col">Weight</th><th scope="col">Body fat &amp; method</th><th scope="col">Daily target</th><th scope="col">Goal</th></tr></thead><tbody id="historyRows"></tbody></table>
+            </div>
+          </div>
+          <button class="btn ghost" id="backupCheckins" type="button" disabled>Download check-in data</button>
+        </article>
       </section>
     </main>
 

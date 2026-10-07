@@ -279,3 +279,6 @@ export function supplements(r) {
   if (r.input.style === 'endurance') list.push(['Electrolytes', 'Sodium & potassium during long sessions (>60 min).']);
   return list;
 }
+
+// Shared section order for complete PDF and browser-print exports.
+export const FOOD_GUIDE_SECTIONS = [['eat', 'Eat more'], ['limit', 'Limit'], ['avoid', 'Avoid']];

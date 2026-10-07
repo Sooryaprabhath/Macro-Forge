@@ -47,3 +47,11 @@ Plans use formula-based estimates and fixed projection assumptions. All calculat
 The body-fat artwork is bundled at `public/images/bodyfat-reference-sheet.png`. It was generated with the built-in image-generation tool, using the supplied poster as a style reference. Prompt: a regular six-column, two-row sheet of consistent adult male and female anime-style characters, progressively fuller body shapes, neutral front-facing poses, black gym clothing, flat cool-gray background, no text or labels. The guide labels these images as illustrative and not clinically validated.
 
 Fresh profiles require age, weight and height before Next becomes available. Errors are shown inline; feet/inches mode requires both fields (0 inches is valid). Body fat and target weight remain optional. Saved valid profiles can be reused.
+
+## Progress check-ins
+
+After generating a plan, use **Save a check-in or compare progress** to open the progress section. Choose the measurement date and save. Update your measurements and generate a new plan before saving the next check-in. Any two saved records can be compared for weight, estimated body fat (percentage points) and daily calorie target.
+
+History uses a separate versioned browser-storage key (`macroforge:checkins:v1`); it does not overwrite older check-ins or add records on reload. Identical values on the same date are deduplicated, while changed values are retained as separate records. Body-fat changes are flagged when methods or sex settings differ. No historical date is inferred from a previously saved plan.
+
+Records stay on that browser/device and are lost if its storage is cleared. **Download check-in data** exports JSON for personal recordkeeping; import/sync is not implemented. Storage errors are shown without replacing existing history.
