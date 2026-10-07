@@ -22,6 +22,14 @@
       <nav>
         <a href="#plan">Planner</a>
         <a href="#results" class="nav-results hidden">My Plan</a>
+        <details class="background-settings">
+          <summary>Blur</summary>
+          <div class="background-control">
+            <label for="backgroundBlur">Background blur</label>
+            <output id="backgroundBlurValue" for="backgroundBlur">0%</output>
+            <input id="backgroundBlur" type="range" min="0" max="20" step="1" value="0" aria-describedby="backgroundBlurValue" />
+          </div>
+        </details>
       </nav>
     </header>
 

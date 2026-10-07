@@ -553,3 +553,23 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
   .print-food-entry h4 { font-size: 13px; margin-bottom: 3px; }
   .print-food-entry p { font-size: 12px; }
 }
+
+/* User-controlled background softness; foreground text stays sharp. */
+#bg { filter: blur(var(--background-blur, 0px)); }
+.background-settings { position: relative; }
+.background-settings summary { list-style: none; cursor: pointer; padding: 8px 14px; font-size: 14px; color: var(--muted); border-radius: 999px; }
+.background-settings summary::-webkit-details-marker { display: none; }
+.background-settings summary:hover, .background-settings[open] summary { color: var(--fg); background: var(--glass-hi); }
+.background-settings summary:focus-visible { outline: 2px solid var(--a); outline-offset: 2px; }
+.background-control { position: absolute; right: 0; top: calc(100% + 16px); width: 230px; display: grid; grid-template-columns: 1fr auto; gap: 18px 12px; padding: 18px 20px 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--glass); box-shadow: 0 12px 32px #0008; }
+.background-control label { font-size: 12px; color: var(--fg); }
+.background-control input[type='range'] { grid-column: 1 / -1; width: 100%; min-width: 0; cursor: pointer; }
+.background-control input:focus-visible { outline: 2px solid var(--a); outline-offset: 9px; }
+.background-control output { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+@media screen and (max-width: 680px) {
+  .background-settings summary { min-height: 44px; display: flex; align-items: center; padding: 8px; font-size: 12px; }
+}
+@media screen and (max-width: 380px) {
+  .nav .logo { font-size: 14px; gap: 5px; }
+  .nav nav a, .background-settings summary { font-size: 11px; padding: 6px; }
+}

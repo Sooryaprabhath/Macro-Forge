@@ -12,6 +12,36 @@ const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const STORE = 'macroforge:v1';
 
+// Keep readability preferences separate from nutrition data.
+const BLUR_STORE = 'macroforge:background-blur:v1';
+const blurSlider = $('#backgroundBlur');
+const blurSettings = $('.background-settings');
+document.addEventListener('click', (event) => {
+  if (!blurSettings.contains(event.target)) blurSettings.open = false;
+});
+blurSettings.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    blurSettings.open = false;
+    $('summary', blurSettings).focus();
+  }
+});
+function applyBackgroundBlur(value) {
+  const amount = Number(value);
+  const blur = Number.isFinite(amount) ? Math.max(0, Math.min(20, Math.round(amount))) : 0;
+  blurSlider.value = String(blur);
+  document.documentElement.style.setProperty('--background-blur', `${blur}px`);
+  blurSlider.style.setProperty('--fill', `${blur * 5}%`);
+  $('#backgroundBlurValue').value = `${blur * 5}%`;
+  blurSlider.setAttribute('aria-valuetext', `${blur * 5}% background blur`);
+  return blur;
+}
+try { applyBackgroundBlur(localStorage.getItem(BLUR_STORE)); }
+catch { applyBackgroundBlur(0); }
+blurSlider.addEventListener('input', () => {
+  const blur = applyBackgroundBlur(blurSlider.value);
+  try { localStorage.setItem(BLUR_STORE, String(blur)); } catch { /* Still works without storage. */ }
+});
+
 const bg = createBackground($('#bg'));
 let ring = null;
 let progress = null;
