@@ -42,6 +42,17 @@ input { font: inherit; color: inherit; }
 
 main, .nav, .foot { position: relative; z-index: 2; }
 
+.test-support {
+  position: relative; z-index: 2;
+  width: min(1180px, calc(100% - 32px)); margin: 24px auto 0; padding: 24px 28px;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  border: 1px solid rgba(123, 97, 255, .35); border-radius: 22px;
+  background: #0c0d15;
+}
+.test-support h2 { margin: 8px 0 6px; font: 600 clamp(20px, 3vw, 28px) var(--display); }
+.test-support p:not(.eyebrow) { color: var(--muted); }
+.test-support .btn { flex: 0 0 auto; }
+
 /* ---------- Nav ---------- */
 .nav {
   position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
@@ -524,6 +535,8 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
   .results-actions { gap: 10px; }
   .results-actions .btn { width: 100%; justify-content: center; }
   .foot { flex-direction: column; gap: 8px; margin-top: 20px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .test-support { padding: 20px 16px; flex-direction: column; align-items: stretch; }
+  .test-support .btn { justify-content: center; text-align: center; }
   .toast { width: calc(100% - 32px); text-align: center; border-radius: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); }
 }
 @media (hover: none), (pointer: coarse) {
