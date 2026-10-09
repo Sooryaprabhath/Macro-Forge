@@ -7,11 +7,12 @@ import { allowedFoods, buildSampleDay, coachTips, foodGuide, supplements, REGION
 import { createProgress } from './progress.js';
 import { bodyErrors } from './validation.js';
 import { renderBodyFatCards } from './bodyfat.js';
-import { buildWorkout } from './workout.js';
+import { buildWorkout, EQUIPMENT_LABELS } from './workout.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const STORE = 'macroforge:v1';
+const WORKOUT_STORE = 'macroforge:workout-completions:v1';
 
 // Test checkout is deliberately limited to the local Vite development server.
 // It is removed from production builds, so visitors can never access it.
@@ -68,6 +69,7 @@ const state = {
   sex: 'male',
   activity: '1.55',
   style: 'strength',
+  equipment: 'fullGym',
   goal: 'maintain',
   pace: 'moderate',
   diet: 'omnivore',
@@ -261,6 +263,7 @@ function readInput() {
     activity: parseFloat(state.activity),
     days: num('days'),
     style: state.style,
+    equipment: state.equipment,
     goal: state.goal,
     pace: state.pace,
     target: Number.isFinite(target) ? target : NaN,
@@ -419,31 +422,66 @@ function generate(scroll) {
 
 function renderWorkout(r) {
   const workout = buildWorkout(r);
+  const completed = getCompletedWorkoutItems(r);
   const toggle = $('#workoutToggle');
   $('#workoutTitle').textContent = workout.title;
   $('#workoutMeta').textContent = r.input.days
-    ? `${r.input.days} sessions per week · ${r.input.style === 'strength' ? 'strength / hypertrophy' : r.input.style}. Open the sessions and follow one numbered session on each training day.`
+    ? `${r.input.days} sessions per week · ${EQUIPMENT_LABELS[r.input.equipment] || EQUIPMENT_LABELS.fullGym} · ${r.input.style === 'strength' ? 'strength / hypertrophy' : r.input.style}. Open the sessions and follow one numbered session on each training day.`
     : 'Start with simple movement';
   $('#workoutPlan').hidden = true;
+  $('#workoutProgress').textContent = '';
   toggle.setAttribute('aria-expanded', 'false');
   setWorkoutToggle(false, r.input.days);
   if (!workout.days.length) {
     $('#workoutPlan').innerHTML = `<p class="muted">${workout.prescription}</p><p class="workout-note">${workout.progression}</p>`;
     return;
   }
-  $('#workoutPlan').innerHTML = workout.days.map((session) => `
+  const exercise = (item, id) => `<li class="workout-exercise ${completed.has(id) ? 'complete' : ''}">
+    <button class="exercise-check" type="button" data-id="${id}" aria-pressed="${completed.has(id)}" aria-label="Mark ${item.exercise} complete">✓</button>
+    <div><b class="exercise-name">${item.exercise}</b><span>${item.prescription}</span></div>
+    ${item.options?.length > 1 ? `<button class="exercise-swap" type="button" data-options="${encodeURIComponent(JSON.stringify(item.options))}" data-choice="${item.options.indexOf(item.exercise)}" aria-label="Swap ${item.exercise}">Swap ↻</button>` : ''}
+  </li>`;
+  $('#workoutPlan').innerHTML = workout.days.map((session, sessionIndex) => `
     <article class="workout-session">
       <div class="workout-head"><span>${session.day}</span><h3>${session.label}</h3></div>
       <div class="workout-group priority-group">
         <p><span class="priority-icon" aria-hidden="true">✓</span><b>Required today</b><small>Complete all 3 first</small></p>
-        <ul>${session.main.map((item) => `<li><b>${item.exercise}</b><span>${item.prescription}</span></li>`).join('')}</ul>
+        <ul>${session.main.map((item, index) => exercise(item, `${sessionIndex}:main:${index}`)).join('')}</ul>
       </div>
       <div class="workout-group accessory-group">
         <p><span class="accessory-icon" aria-hidden="true">+</span><b>Optional extras</b><small>Only if time and recovery allow</small></p>
-        <ul>${session.accessory.map((item) => `<li><b>${item.exercise}</b><span>${item.prescription}</span></li>`).join('')}</ul>
+        <ul>${session.accessory.map((item, index) => exercise(item, `${sessionIndex}:accessory:${index}`)).join('')}</ul>
       </div>
     </article>`).join('') + `
     <div class="workout-guidance"><p><b>How to run it:</b> ${workout.prescription}</p><p><b>Progress:</b> ${workout.progression}</p><p><b>Rest:</b> ${workout.rest}</p><p><b>Conditioning:</b> ${workout.conditioning}</p><p class="workout-safety">${workout.safety}</p></div>`;
+  updateWorkoutProgress();
+}
+
+function workoutStorageKey(r) {
+  return [r.input.goal, r.input.style, r.input.equipment, r.input.days, r.input.weight].join(':');
+}
+function getCompletedWorkoutItems(r) {
+  try {
+    const all = JSON.parse(localStorage.getItem(WORKOUT_STORE)) || {};
+    return new Set(all[workoutStorageKey(r)] || []);
+  } catch { return new Set(); }
+}
+function saveCompletedWorkoutItem(id, done) {
+  if (!state.result) return;
+  try {
+    const all = JSON.parse(localStorage.getItem(WORKOUT_STORE)) || {};
+    const key = workoutStorageKey(state.result);
+    const items = new Set(all[key] || []);
+    done ? items.add(id) : items.delete(id);
+    all[key] = [...items];
+    localStorage.setItem(WORKOUT_STORE, JSON.stringify(all));
+  } catch { /* Completion tracking remains usable for this page even without storage. */ }
+}
+
+function updateWorkoutProgress() {
+  const checks = $$('.exercise-check', $('#workoutPlan'));
+  const completed = checks.filter((check) => check.getAttribute('aria-pressed') === 'true').length;
+  $('#workoutProgress').textContent = checks.length ? `${completed} of ${checks.length} exercises completed` : '';
 }
 
 $('#workoutToggle').addEventListener('click', () => {
@@ -461,6 +499,26 @@ function setWorkoutToggle(expanded, count) {
     ? `<span>Hide routine</span><i aria-hidden="true">↑</i>`
     : `<span>Open my routine</span><em>${sessions}</em><i aria-hidden="true">↓</i>`;
 }
+
+$('#workoutPlan').addEventListener('click', (event) => {
+  const check = event.target.closest('.exercise-check');
+  if (check) {
+    const done = check.getAttribute('aria-pressed') !== 'true';
+    check.setAttribute('aria-pressed', String(done));
+    check.closest('.workout-exercise').classList.toggle('complete', done);
+    saveCompletedWorkoutItem(check.dataset.id, done);
+    updateWorkoutProgress();
+    return;
+  }
+  const swap = event.target.closest('.exercise-swap');
+  if (!swap) return;
+  const options = JSON.parse(decodeURIComponent(swap.dataset.options));
+  const next = (Number(swap.dataset.choice) + 1) % options.length;
+  swap.dataset.choice = String(next);
+  const row = swap.closest('.workout-exercise');
+  $('.exercise-name', row).textContent = options[next];
+  swap.setAttribute('aria-label', `Swap ${options[next]}`);
+});
 
 function renderChart(r) {
   const W = 640, H = 230, P = { l: 44, r: 16, t: 18, b: 30 };
@@ -642,7 +700,7 @@ function restore() {
       else el.value = v;
     });
     $('#bodyFat').disabled = !$('#bodyFatOn').checked;
-    ['sex', 'activity', 'style', 'goal', 'pace', 'diet', 'carbStyle'].forEach((k) => saved[k] && setSeg(k, saved[k]));
+    ['sex', 'activity', 'style', 'equipment', 'goal', 'pace', 'diet', 'carbStyle'].forEach((k) => saved[k] && setSeg(k, saved[k]));
     updateRegion();
     $$('input[type=range]').forEach((el) => el.dispatchEvent(new Event('input')));
     state.bodyFatSource = saved.bodyFatSource === 'visual' ? 'visual' : 'manual';

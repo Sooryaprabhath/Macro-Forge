@@ -336,6 +336,7 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 .workout-summary { color: #c4cad8; font-size: 13px; line-height: 1.45; }
 .workout-key { margin: 16px 0; padding: 11px 13px; border-radius: 12px; border: 1px solid rgba(200,255,46,.22); background: rgba(200,255,46,.08); color: #dfe7c4; font-size: 12px; }
 .workout-key b { color: var(--a); }
+.workout-progress { min-height: 18px; margin: -7px 0 13px; color: #b9c69c; font: 700 11px var(--display); letter-spacing: .04em; text-transform: uppercase; }
 .workout-toggle { width: 100%; min-height: 52px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; border-radius: 15px; background: var(--a); color: #05060a; font: 700 14px var(--display); text-align: left; transition: .25s var(--ease); }
 .workout-toggle:hover { transform: translateY(-2px); background: #dcff74; box-shadow: 0 5px 0 var(--b); }
 .workout-toggle span { flex: 1; }
@@ -364,6 +365,12 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 .workout-session li:first-child { padding-top: 0; border-top: 0; }
 .workout-session li b { font-size: 13px; font-weight: 650; }
 .workout-session li span, .workout-guidance p { color: var(--muted); font-size: 12px; }
+.workout-session li.workout-exercise { grid-template-columns: 27px minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
+.exercise-check { display: grid; place-items: center; width: 25px; height: 25px; padding: 0; border: 1px solid rgba(200,255,46,.6); border-radius: 8px; color: var(--a); font: 800 14px var(--display); }
+.exercise-check[aria-pressed="true"] { background: var(--a); color: #05060a; }
+.workout-exercise.complete .exercise-name { color: #9da687; text-decoration: line-through; }
+.exercise-swap { padding: 5px 7px; border: 1px solid rgba(166,150,255,.42); border-radius: 8px; color: #c2b9ff; font: 700 10px var(--display); white-space: nowrap; }
+.exercise-swap:hover { background: rgba(166,150,255,.14); }
 .workout-guidance { grid-column: 1 / -1; display: grid; gap: 9px; }
 .workout-guidance b { color: var(--fg); }
 .workout-safety { color: #c8b9c4 !important; }

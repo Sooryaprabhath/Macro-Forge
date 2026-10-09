@@ -32,6 +32,40 @@ const DAYS = {
   legs: { label: 'Legs', main: ['Squat or leg press', 'Hip thrust or Romanian deadlift', 'Split squat'], accessory: ['Leg curl', 'Calf raise', 'Plank'] },
 };
 
+export const EQUIPMENT_LABELS = { home: 'home / bodyweight', basicGym: 'basic gym', fullGym: 'full gym' };
+const EXERCISE_OPTIONS = {
+  'Squat or leg press': ['Bodyweight or goblet squat', 'Leg press', 'Barbell back squat'],
+  'Bench press or push-up': ['Push-up', 'Dumbbell bench press', 'Barbell bench press'],
+  Row: ['Backpack row', 'Seated cable row', 'Barbell row'],
+  'Romanian deadlift': ['Single-leg hip hinge', 'Dumbbell Romanian deadlift', 'Barbell Romanian deadlift'],
+  'Lat pulldown': ['Towel row', 'Lat pulldown', 'Lat pulldown'],
+  'Deadlift variation or hip thrust': ['Glute bridge', 'Dumbbell hip thrust', 'Barbell hip thrust'],
+  'Overhead press': ['Pike push-up', 'Dumbbell overhead press', 'Barbell overhead press'],
+  'Pulldown or assisted pull-up': ['Doorframe row', 'Assisted pull-up', 'Pull-up or lat pulldown'],
+  'Split squat': ['Split squat', 'Dumbbell split squat', 'Barbell split squat'],
+  'Incline dumbbell press': ['Feet-elevated push-up', 'Incline dumbbell press', 'Incline dumbbell press'],
+  'Farmer carry': ['Suitcase carry', 'Dumbbell farmer carry', 'Farmer carry'],
+  'Goblet squat or front squat': ['Tempo bodyweight squat', 'Goblet squat', 'Front squat'],
+  'Incline press': ['Feet-elevated push-up', 'Incline dumbbell press', 'Incline barbell press'],
+  'Chest-supported row': ['Backpack row', 'Chest-supported dumbbell row', 'Chest-supported row'],
+  'Leg curl': ['Sliding hamstring curl', 'Seated leg curl', 'Lying leg curl'],
+  'Lateral raise': ['Wall slide', 'Dumbbell lateral raise', 'Cable lateral raise'],
+  'Bench press or dumbbell press': ['Push-up', 'Dumbbell bench press', 'Barbell bench press'],
+  'Triceps pressdown': ['Close-grip push-up', 'Dumbbell triceps extension', 'Cable pressdown'],
+  'Rear-delt fly': ['Prone Y raise', 'Dumbbell rear-delt fly', 'Cable rear-delt fly'],
+  'Biceps curl': ['Backpack curl', 'Dumbbell curl', 'Cable or barbell curl'],
+  'Hip thrust or deadlift variation': ['Glute bridge', 'Dumbbell hip thrust', 'Barbell hip thrust'],
+  'Front squat or goblet squat': ['Tempo bodyweight squat', 'Goblet squat', 'Front squat'],
+  'Step-up': ['Step-up', 'Dumbbell step-up', 'Barbell step-up'],
+  'Leg extension': ['Wall sit', 'Leg extension', 'Leg extension'],
+  'Incline dumbbell press': ['Feet-elevated push-up', 'Incline dumbbell press', 'Incline dumbbell press'],
+  'Push-up': ['Push-up', 'Push-up', 'Push-up'],
+  'Plank': ['Plank', 'Plank', 'Plank'],
+  'Calf raise': ['Single-leg calf raise', 'Standing calf raise', 'Standing calf raise'],
+  'Dead bug': ['Dead bug', 'Dead bug', 'Dead bug'],
+};
+const EQUIPMENT_INDEX = { home: 0, basicGym: 1, fullGym: 2 };
+
 const scheduleForDays = (days) => {
   if (days <= 0) return [];
   if (days === 1) return ['fullA'];
@@ -42,17 +76,24 @@ const scheduleForDays = (days) => {
   return ['push', 'pull', 'legs', 'upperB', 'lowerB', 'fullA', 'fullB'].slice(0, days);
 };
 
-function adaptForStyle(day, style) {
-  if (style !== 'endurance') return day;
+function trainingItem(exercise, equipment, prescription, endurance = false) {
+  const options = EXERCISE_OPTIONS[exercise] || [exercise, exercise, exercise];
+  const selected = options[EQUIPMENT_INDEX[equipment] ?? 2];
+  return { exercise: endurance ? `${selected} · controlled circuit` : selected, options: endurance ? options.map((x) => `${x} · controlled circuit`) : [...new Set(options)], prescription };
+}
+function adaptForStyle(day, style, equipment, plan) {
+  const endurance = style === 'endurance';
   return {
     ...day,
-    main: day.main.map((exercise) => `${exercise} · controlled circuit`),
-    accessory: [...day.accessory.slice(0, 2), 'Easy conditioning · 15–25 min'],
+    main: day.main.map((exercise) => trainingItem(exercise, equipment, plan.main, endurance)),
+    accessory: endurance
+      ? [...day.accessory.slice(0, 2).map((exercise) => trainingItem(exercise, equipment, plan.accessory)), { exercise: 'Easy conditioning', options: [], prescription: '15–25 min' }]
+      : day.accessory.map((exercise) => trainingItem(exercise, equipment, plan.accessory)),
   };
 }
 
 export function buildWorkout(result) {
-  const { goal, style, days } = result.input;
+  const { goal, style, days, equipment = 'fullGym' } = result.input;
   const plan = GOAL[goal] || GOAL.maintain;
   const activeDays = Math.max(0, Math.min(7, Math.round(Number(days) || 0)));
   if (!activeDays) return {
@@ -63,12 +104,12 @@ export function buildWorkout(result) {
     rest: 'Keep intensity conversational.',
   };
   const daysPlan = scheduleForDays(activeDays).map((key, index) => {
-    const template = adaptForStyle(DAYS[key], style);
+    const template = adaptForStyle(DAYS[key], style, equipment, plan);
     return {
       day: `Session ${index + 1}`,
       label: template.label,
-      main: template.main.map((exercise) => ({ exercise, prescription: plan.main })),
-      accessory: template.accessory.map((exercise) => ({ exercise, prescription: plan.accessory })),
+      main: template.main,
+      accessory: template.accessory,
     };
   });
   const conditioning = style === 'endurance'

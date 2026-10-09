@@ -5,7 +5,7 @@ import { allowedFoods, buildSampleDay, foodGuide, REGIONS } from '../src/foods.j
 import { createPlanPdf, shoppingList } from '../src/pdf.js';
 import { FOOD_RECORDS } from '../src/food-data.js';
 import { calculateRecipe, validateFoodRecords } from '../src/recipes.js';
-import { buildWorkout } from '../src/workout.js';
+import { buildWorkout, EQUIPMENT_LABELS } from '../src/workout.js';
 
 const input = { sex: 'male', age: 25, weight: 75, height: 175, bodyFat: NaN, activity: 1.55, days: 4, style: 'strength', goal: 'maintain', pace: 'moderate', target: NaN, diet: 'omnivore', meals: 4, carbStyle: 'balanced', region: 'global' };
 
@@ -40,6 +40,17 @@ test('workout routine matches the generated plan training days and has usable se
       assert.ok(routine.days.flatMap((session) => [...session.main, ...session.accessory]).every((item) => item.exercise && item.prescription));
     }
   }
+});
+
+test('workout routines use equipment-appropriate exercises and offer swaps', () => {
+  for (const equipment of Object.keys(EQUIPMENT_LABELS)) {
+    const routine = buildWorkout(calculate({ ...input, equipment, days: 3 }));
+    const exercises = routine.days.flatMap((session) => [...session.main, ...session.accessory]);
+    assert.ok(exercises.every((item) => item.exercise && item.prescription));
+    assert.ok(exercises.some((item) => item.options?.length > 1));
+  }
+  const homeRoutine = buildWorkout(calculate({ ...input, equipment: 'home', days: 1 }));
+  assert.match(homeRoutine.days[0].main[0].exercise, /bodyweight|goblet/i);
 });
 
 test('regions change recommendations; unknown regions safely fall back to global', () => {

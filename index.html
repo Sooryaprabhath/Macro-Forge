@@ -200,6 +200,15 @@
                 <button type="button" data-v="endurance">Endurance‑heavy</button>
               </div>
             </div>
+            <div class="field">
+              <label>Available equipment</label>
+              <div class="cards equipment-cards" data-name="equipment">
+                <button type="button" data-v="home"><b>Home / bodyweight</b><span>Minimal equipment</span></button>
+                <button type="button" data-v="basicGym"><b>Basic gym</b><span>Dumbbells + machines</span></button>
+                <button type="button" data-v="fullGym" class="on"><b>Full gym</b><span>Barbells + machines</span></button>
+              </div>
+              <p class="hint">Your workout routine will use exercises that match this equipment. You can still swap any exercise later.</p>
+            </div>
           </fieldset>
 
           <!-- STEP 3 -->
@@ -377,6 +386,7 @@
               </div>
             </div>
             <p class="workout-key"><b>Follow the bright “Required today” block first.</b> Optional work is only for days when you have time and feel recovered.</p>
+            <p id="workoutProgress" class="workout-progress" aria-live="polite"></p>
             <button class="workout-toggle" id="workoutToggle" type="button" aria-expanded="false" aria-controls="workoutPlan">Open my routine</button>
             <div id="workoutPlan" class="workout-plan" hidden></div>
           </article>
