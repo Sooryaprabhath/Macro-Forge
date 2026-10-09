@@ -75,6 +75,7 @@ main, .nav, .foot { position: relative; z-index: 2; }
 .unit-toggle button { padding: 4px 8px; border-radius: 6px; color: var(--muted); font-size: 11px; }
 .unit-toggle button.on { background: var(--a); color: #05060a; font-weight: 700; }
 .weight-range-imperial { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.weight-range-imperial[hidden] { display: none; }
 .weight-range-result { display: grid; align-content: center; gap: 3px; padding: 16px 20px; border-radius: 16px; background: #0c0d15; border: 1px solid rgba(200,255,46,.36); }
 .weight-range-result span { color: var(--muted); font-size: 12px; }
 .weight-range-result b { color: var(--a); font: 700 clamp(28px,4vw,40px) var(--display); letter-spacing: -.05em; }
