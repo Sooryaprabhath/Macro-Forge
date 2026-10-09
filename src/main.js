@@ -13,6 +13,21 @@ const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const STORE = 'macroforge:v1';
 
+// Test checkout is deliberately limited to the local Vite development server.
+// It is removed from production builds, so visitors can never access it.
+if (import.meta.env.DEV) {
+  const testSupport = $('#testSupport');
+  testSupport.hidden = false;
+  testSupport.setAttribute('aria-labelledby', 'testSupportTitle');
+  testSupport.innerHTML = `
+    <div>
+      <p class="eyebrow"><span class="dot"></span>Razorpay test mode</p>
+      <h2 id="testSupportTitle">Test the MacroForge support checkout</h2>
+      <p>This simulated ₹99 checkout is for local testing only. No real money will be charged or received.</p>
+    </div>
+    <a class="btn ghost" href="https://rzp.io/rzp/flEiZV7" target="_blank" rel="noopener noreferrer">Test ₹99 checkout <i>↗</i></a>`;
+}
+
 // Keep readability preferences separate from nutrition data.
 const BLUR_STORE = 'macroforge:background-blur:v1';
 const blurSlider = $('#backgroundBlur');
