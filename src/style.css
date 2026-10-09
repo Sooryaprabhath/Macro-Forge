@@ -579,6 +579,7 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
   .nav nav > a:not(.nav-info) { display: none; }
   .mobile-menu { display: block; }
   .mobile-menu summary { display: flex; align-items: center; min-height: 44px; padding: 8px 10px; font-size: 13px; }
+  .nav nav .mobile-menu-panel a { display: flex; }
   .nav nav .nav-info { min-height: 44px; }
   .hero { min-height: 100svh; align-items: center; padding: 110px 4px 72px; }
   .hero h1 { font-size: clamp(46px, 12vw, 76px); line-height: 1; }

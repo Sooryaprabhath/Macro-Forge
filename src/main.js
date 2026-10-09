@@ -19,9 +19,14 @@ const WORKOUT_STORE = 'macroforge:workout-completions:v1';
 const BLUR_STORE = 'macroforge:background-blur:v1';
 const blurSlider = $('#backgroundBlur');
 const blurSettings = $('.background-settings');
+const mobileMenu = $('.mobile-menu');
 document.addEventListener('click', (event) => {
   if (!blurSettings.contains(event.target)) blurSettings.open = false;
+  if (mobileMenu?.open && !mobileMenu.contains(event.target)) mobileMenu.open = false;
 });
+mobileMenu?.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => {
+  mobileMenu.open = false;
+}));
 blurSettings.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
     blurSettings.open = false;
