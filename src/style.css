@@ -500,7 +500,15 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 .suffix-input::after { top: 30px; }
 
 .bf-card .bf-art { display: block; position: relative; width: 100%; aspect-ratio: 1 / 2; overflow: hidden; margin: 12px 0; border-radius: 10px; background: #d8dfe5; }
-.bf-art img { position: absolute; display: block; width: 600%; height: 200%; max-width: none; }
+.bf-art img { position: absolute; display: block; width: 600%; height: 200%; max-width: none; opacity: 0; transition: opacity .24s ease; }
+.bf-art.loaded img { opacity: 1; }
+.bf-loader { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; gap: 8px; color: #293044; font: 600 10px var(--display); letter-spacing: .08em; text-transform: uppercase; transition: opacity .2s ease; }
+.bf-loader i { width: 24px; height: 24px; margin: auto; border: 3px solid #afb8c6; border-top-color: var(--b); border-radius: 50%; animation: bf-spin .75s linear infinite; }
+.bf-art.loaded .bf-loader { opacity: 0; visibility: hidden; }
+.bf-art.failed .bf-loader i { display: none; }
+.bf-art.failed .bf-loader span { font-size: 0; }
+.bf-art.failed .bf-loader span::after { content: 'Image unavailable'; font-size: 9px; letter-spacing: .03em; text-transform: none; }
+@keyframes bf-spin { to { transform: rotate(360deg); } }
 
 /* Keep the same visual language while fitting narrow and touch screens. */
 #plan, #results, #how { scroll-margin-top: 88px; }

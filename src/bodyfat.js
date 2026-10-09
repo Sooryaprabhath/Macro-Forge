@@ -7,7 +7,7 @@ export const BODY_FAT_RANGES = {
 // One locally bundled sheet keeps all twelve figures consistent and cacheable.
 const sheetUrl = `${import.meta.env?.BASE_URL || '/'}images/bodyfat-reference-sheet.png`;
 export function bodyIllustration(sex, index) {
-  return `<span class="bf-art" aria-hidden="true"><img src="${sheetUrl}" alt="" loading="lazy" decoding="async" style="left:${-index * 100}%;top:${sex === 'female' ? -100 : 0}%" /></span>`;
+  return `<span class="bf-art" aria-hidden="true"><span class="bf-loader"><i></i><span>Loading</span></span><img src="${sheetUrl}" alt="" loading="lazy" decoding="async" style="left:${-index * 100}%;top:${sex === 'female' ? -100 : 0}%" /></span>`;
 }
 
 export function renderBodyFatCards(container, sex) {
@@ -16,4 +16,11 @@ export function renderBodyFatCards(container, sex) {
       <span class="bf-card-top">REFERENCE ${String(index + 1).padStart(2, '0')}<span class="bf-check" aria-hidden="true">✓</span></span>
       ${bodyIllustration(sex, index)}<strong>${low}–${high}%</strong><span>Approximate range</span>
     </button>`).join('');
+  container.querySelectorAll('.bf-art img').forEach((image) => {
+    const ready = () => image.closest('.bf-art').classList.add('loaded');
+    const failed = () => image.closest('.bf-art').classList.add('failed');
+    image.addEventListener('load', ready, { once: true });
+    image.addEventListener('error', failed, { once: true });
+    if (image.complete) (image.naturalWidth ? ready : failed)();
+  });
 }
