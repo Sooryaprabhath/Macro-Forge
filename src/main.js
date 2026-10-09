@@ -124,12 +124,20 @@ const bindRange = (id, fmt = (v) => v) => {
 bindRange('days');
 bindRange('meals');
 const updateBf = bindRange('bodyFat', (v) => `${v}%`);
+let weightRangeUnit = 'cm';
+function weightRangeHeightCm() {
+  if (weightRangeUnit === 'cm') return Number($('#weightRangeHeight').value);
+  const feet = Number($('#weightRangeFeet').value);
+  const inches = Number($('#weightRangeInches').value);
+  return Number.isFinite(feet) && Number.isFinite(inches) ? (feet * 12 + inches) * 2.54 : NaN;
+}
 function renderHealthyWeightRange() {
-  const range = healthyWeightRange($('#weightRangeHeight').value);
+  const range = healthyWeightRange(weightRangeHeightCm());
   const result = $('#weightRangeResult');
   if (!range) {
     result.hidden = true;
-    $('#weightRangeStatus').textContent = $('#weightRangeHeight').value ? 'Enter a height between 91 and 274 cm.' : '';
+    const hasValue = weightRangeUnit === 'cm' ? $('#weightRangeHeight').value : $('#weightRangeFeet').value || $('#weightRangeInches').value;
+    $('#weightRangeStatus').textContent = hasValue ? 'Enter a height between 3 ft 0 in and 9 ft 0 in.' : '';
     return;
   }
   result.hidden = false;
@@ -137,7 +145,21 @@ function renderHealthyWeightRange() {
   $('#healthyWeightKg').textContent = `${range.minKg}–${range.maxKg} kg`;
   $('#healthyWeightLb').textContent = `${range.minLb}–${range.maxLb} lb`;
 }
+function setWeightRangeUnit(unit) {
+  weightRangeUnit = unit;
+  const metric = unit === 'cm';
+  $('#weightRangeHeight').hidden = !metric;
+  $('#weightRangeImperial').hidden = metric;
+  $('#weightRangeCm').classList.toggle('on', metric);
+  $('#weightRangeFt').classList.toggle('on', !metric);
+  $('#weightRangeCm').setAttribute('aria-pressed', String(metric));
+  $('#weightRangeFt').setAttribute('aria-pressed', String(!metric));
+  renderHealthyWeightRange();
+}
 $('#weightRangeHeight').addEventListener('input', renderHealthyWeightRange);
+['weightRangeFeet', 'weightRangeInches'].forEach((id) => $(`#${id}`).addEventListener('input', renderHealthyWeightRange));
+$('#weightRangeCm').addEventListener('click', () => setWeightRangeUnit('cm'));
+$('#weightRangeFt').addEventListener('click', () => setWeightRangeUnit('ft'));
 $('#bodyFatOn').addEventListener('change', (e) => {
   $('#bodyFat').disabled = !e.target.checked;
   state.bodyFatSource = 'manual';

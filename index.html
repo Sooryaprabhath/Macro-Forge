@@ -90,8 +90,12 @@
         </div>
         <div class="weight-range-card glass">
           <div class="weight-range-input">
-            <label for="weightRangeHeight">Your height <em>cm</em></label>
+            <div class="weight-range-label"><label for="weightRangeHeight">Your height</label><div class="unit-toggle" role="group" aria-label="Height unit"><button id="weightRangeCm" class="on" type="button" aria-pressed="true">cm</button><button id="weightRangeFt" type="button" aria-pressed="false">ft / in</button></div></div>
             <input id="weightRangeHeight" type="number" inputmode="decimal" min="91.44" max="274.32" step="0.1" placeholder="e.g. 175" aria-describedby="weightRangeStatus" />
+            <div id="weightRangeImperial" class="weight-range-imperial" hidden>
+              <input id="weightRangeFeet" type="number" inputmode="numeric" min="3" max="9" step="1" placeholder="ft" aria-label="Height in feet" aria-describedby="weightRangeStatus" />
+              <input id="weightRangeInches" type="number" inputmode="numeric" min="0" max="11" step="1" placeholder="in" aria-label="Height in inches" aria-describedby="weightRangeStatus" />
+            </div>
             <p id="weightRangeStatus" class="field-error" aria-live="polite"></p>
           </div>
           <div id="weightRangeResult" class="weight-range-result" hidden aria-live="polite">

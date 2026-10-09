@@ -68,9 +68,13 @@ main, .nav, .foot { position: relative; z-index: 2; }
 .weight-range { position: relative; z-index: 2; width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 88px 0 10px; }
 .weight-range .section-head { max-width: 660px; margin-bottom: 24px; }
 .weight-range-card { display: grid; grid-template-columns: minmax(230px, .85fr) minmax(240px, 1fr); gap: 20px 28px; padding: 28px; border-color: rgba(200,255,46,.3); background: linear-gradient(135deg, rgba(200,255,46,.09), rgba(123,97,255,.09)); }
-.weight-range-input label { display: block; margin-bottom: 9px; font: 600 15px var(--display); }
-.weight-range-input label em { color: var(--muted); font: 400 12px var(--sans); }
+.weight-range-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+.weight-range-input label { font: 600 15px var(--display); }
 .weight-range-input input { width: 100%; padding: 15px 16px; border: 1px solid var(--line); border-radius: 13px; background: rgba(5,6,10,.46); }
+.unit-toggle { display: flex; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: rgba(5,6,10,.38); }
+.unit-toggle button { padding: 4px 8px; border-radius: 6px; color: var(--muted); font-size: 11px; }
+.unit-toggle button.on { background: var(--a); color: #05060a; font-weight: 700; }
+.weight-range-imperial { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .weight-range-result { display: grid; align-content: center; gap: 3px; padding: 16px 20px; border-radius: 16px; background: #0c0d15; border: 1px solid rgba(200,255,46,.36); }
 .weight-range-result span { color: var(--muted); font-size: 12px; }
 .weight-range-result b { color: var(--a); font: 700 clamp(28px,4vw,40px) var(--display); letter-spacing: -.05em; }
