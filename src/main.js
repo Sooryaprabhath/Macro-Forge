@@ -389,7 +389,10 @@ function generate(scroll) {
   } catch { /* Storage may be unavailable in private browsing. */ }
 
   $('#results').classList.remove('hidden');
-  $('.nav-results').classList.remove('hidden');
+  $$('.nav-results').forEach((link) => link.classList.remove('hidden'));
+  // Begin fetching the large export dependency while the result renders, so an
+  // iPhone tap later does not have to wait for a network import.
+  loadPdfModule().catch(() => { /* The download button reports a retryable error if this fails. */ });
   if (!ring) ring = createMacroRing($('#ring3d'));
   ring.set(r);
   bg.pulse();
@@ -696,7 +699,7 @@ function loadPdfModule() {
 }
 // On phones this starts loading the export code before the user taps Download.
 // That keeps the actual tap available for Safari/Chrome's new-tab action.
-['pointerenter', 'focus'].forEach((eventName) => $('#printBtn').addEventListener(eventName, loadPdfModule, { once: true }));
+['pointerenter', 'pointerdown', 'touchstart', 'focus'].forEach((eventName) => $('#printBtn').addEventListener(eventName, loadPdfModule, { once: true, passive: true }));
 $('#printBtn').addEventListener('click', async () => {
   if (!state.result || !state.sampleDay) return;
   const button = $('#printBtn');
@@ -713,11 +716,21 @@ $('#printBtn').addEventListener('click', async () => {
   try {
     const { createPlanPdf } = await loadPdfModule();
     const doc = createPlanPdf(result, day);
-    if (pdfWindow) {
-      const pdfUrl = URL.createObjectURL(doc.output('blob'));
-      pdfWindow.location.replace(pdfUrl);
+    if (isiOS) {
+      const pdfBlob = doc.output('blob');
+      if (!pdfBlob || !pdfBlob.size) throw new Error('PDF output was empty');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      if (pdfWindow) {
+        pdfWindow.location.href = pdfUrl;
+      } else {
+        // iOS can reject a new-tab request despite a direct touch. Opening the
+        // Blob in this tab still lets the user use Share -> Save to Files.
+        window.location.assign(pdfUrl);
+      }
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
-      $('#exportStatus').textContent = 'Your PDF opened in a new tab. Use Share → Save to Files to keep it on your iPhone.';
+      $('#exportStatus').textContent = pdfWindow
+        ? 'Your PDF opened in a new tab. Use Share → Save to Files to keep it on your iPhone.'
+        : 'Your PDF is opening here. Use Share → Save to Files, then use Back to return to MacroForge.';
     } else {
       doc.save(`MacroForge-${result.input.goal}-${result.input.region}-${new Date().toISOString().slice(0, 10)}.pdf`);
       $('#exportStatus').textContent = 'PDF download started. It contains your last generated plan and displayed sample day.';

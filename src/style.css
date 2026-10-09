@@ -98,6 +98,14 @@ main, .nav, .foot { position: relative; z-index: 2; }
 .nav nav { display: flex; align-items: center; gap: 6px; }
 .nav nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 8px 14px; border-radius: 999px; transition: 0.3s var(--ease); }
 .nav nav a:hover { color: var(--fg); background: var(--glass-hi); }
+.mobile-menu { display: none; position: relative; }
+.mobile-menu summary { list-style: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 8px 12px; border-radius: 999px; }
+.mobile-menu summary::-webkit-details-marker { display: none; }
+.mobile-menu summary::after { content: '⌄'; margin-left: 5px; color: var(--a); }
+.mobile-menu[open] summary { color: var(--fg); background: var(--glass-hi); }
+.mobile-menu-panel { position: absolute; right: 0; top: calc(100% + 10px); width: 172px; padding: 7px; border: 1px solid var(--line); border-radius: 15px; background: #11131d; box-shadow: 0 18px 35px rgba(0,0,0,.34); }
+.mobile-menu-panel a { display: flex; min-height: 42px; align-items: center; padding: 8px 10px; border-radius: 10px; color: var(--muted); text-decoration: none; font-size: 14px; }
+.mobile-menu-panel a:hover { color: var(--fg); background: var(--glass-hi); }
 .chip {
   display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
   background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line);
@@ -567,8 +575,11 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
   .nav { top: max(8px, env(safe-area-inset-top)); padding: 8px 10px 8px 14px; width: calc(100% - 24px); }
   .logo { font-size: 16px; gap: 7px; }
   .logo-mark { width: 18px; height: 18px; }
-  .nav nav { gap: 0; }
-  .nav nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px; font-size: 12px; }
+  .nav nav { gap: 2px; }
+  .nav nav > a:not(.nav-info) { display: none; }
+  .mobile-menu { display: block; }
+  .mobile-menu summary { display: flex; align-items: center; min-height: 44px; padding: 8px 10px; font-size: 13px; }
+  .nav nav .nav-info { min-height: 44px; }
   .hero { min-height: 100svh; align-items: center; padding: 110px 4px 72px; }
   .hero h1 { font-size: clamp(46px, 12vw, 76px); line-height: 1; }
   .hero-cta { gap: 8px; }
@@ -698,7 +709,7 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 }
 @media screen and (max-width: 380px) {
   .nav .logo { font-size: 14px; gap: 5px; }
-  .nav nav a, .background-settings summary { font-size: 11px; padding: 6px; }
+  .mobile-menu summary, .background-settings summary { font-size: 11px; padding: 6px; }
 }
 
 .nav nav .nav-info { display: inline-flex; align-items: center; justify-content: center; padding: 8px; min-width: 36px; min-height: 44px; }
