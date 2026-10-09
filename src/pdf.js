@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { foodGuide, regionInfo, coachTips, supplements, FOOD_GUIDE_SECTIONS } from './foods.js';
+import { buildWorkout } from './workout.js';
 
 // Built from the result snapshot, never animated DOM values or WebGL canvases.
 const clean = (value) => String(value).replace(/[–—‑−]/g, '-').replace(/[‘’]/g, "'")
@@ -149,6 +150,23 @@ export function createPlanPdf(r, day, date = new Date()) {
   table(['Week', 'Weight (kg)', 'Body fat (%)'], r.projection.map((p) => [p.week, p.weight, p.bf]), [58, 58, 58], { compact: true });
   paragraph(`Target pace: ${r.weeklyChange > 0 ? '+' : ''}${r.weeklyChange} kg / week.`);
   if (Number.isFinite(r.input.target)) paragraph(`Target weight: ${r.input.target} kg. ${r.eta === 'mismatch' ? 'This target does not match the selected goal.' : r.eta ? `Estimated time: ${r.eta} weeks.` : 'No weight-change timeline for this goal.'}`);
+
+  newPage('TRAINING / YOUR WEEKLY ROUTINE');
+  const workout = buildWorkout(r);
+  heading(workout.title);
+  if (!workout.days.length) paragraph(workout.prescription);
+  else {
+    workout.days.forEach((session) => {
+      heading(`${session.day}: ${session.label}`, '#28704e', '#edf6ef');
+      table(['Exercise', 'Sets and reps'], [...session.main, ...session.accessory].map((item) => [item.exercise, item.prescription]), [104, 70], { compact: true });
+    });
+    heading('How to follow it');
+    paragraph(workout.prescription, { size: 9 });
+    paragraph(`Progression: ${workout.progression}`, { size: 9 });
+    paragraph(`Rest: ${workout.rest}`, { size: 9 });
+    paragraph(`Conditioning: ${workout.conditioning}`, { size: 9 });
+    note(workout.safety);
+  }
 
   newPage('MEALS / YOUR SAMPLE DAY');
   heading('Training & rest days');

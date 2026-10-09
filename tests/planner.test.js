@@ -5,6 +5,7 @@ import { allowedFoods, buildSampleDay, foodGuide, REGIONS } from '../src/foods.j
 import { createPlanPdf, shoppingList } from '../src/pdf.js';
 import { FOOD_RECORDS } from '../src/food-data.js';
 import { calculateRecipe, validateFoodRecords } from '../src/recipes.js';
+import { buildWorkout } from '../src/workout.js';
 
 const input = { sex: 'male', age: 25, weight: 75, height: 175, bodyFat: NaN, activity: 1.55, days: 4, style: 'strength', goal: 'maintain', pace: 'moderate', target: NaN, diet: 'omnivore', meals: 4, carbStyle: 'balanced', region: 'global' };
 
@@ -26,6 +27,17 @@ test('every region and diet generates finite meals using only permitted local fo
           assert.ok(Number.isFinite(item.grams) && item.grams > 0);
         }
       }
+    }
+  }
+});
+
+test('workout routine matches the generated plan training days and has usable sessions', () => {
+  for (const goal of ['cut', 'maintain', 'bulk']) for (const style of ['strength', 'hybrid', 'endurance']) for (let days = 0; days <= 7; days++) {
+    const routine = buildWorkout(calculate({ ...input, goal, style, days }));
+    assert.equal(routine.days.length, days);
+    if (days) {
+      assert.ok(routine.days.every((session) => session.main.length >= 3 && session.accessory.length >= 3));
+      assert.ok(routine.days.flatMap((session) => [...session.main, ...session.accessory]).every((item) => item.exercise && item.prescription));
     }
   }
 });

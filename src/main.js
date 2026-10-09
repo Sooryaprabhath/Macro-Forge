@@ -7,6 +7,7 @@ import { allowedFoods, buildSampleDay, coachTips, foodGuide, supplements, REGION
 import { createProgress } from './progress.js';
 import { bodyErrors } from './validation.js';
 import { renderBodyFatCards } from './bodyfat.js';
+import { buildWorkout } from './workout.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -392,12 +393,31 @@ function generate(scroll) {
   renderMeals(r);
   renderFoods(r, $('#foodTabs .on').dataset.t);
   renderSample(r);
+  renderWorkout(r);
   $('#tips').innerHTML = coachTips(r).map((t) => `<li>${t}</li>`).join('');
   $('#supps').innerHTML = supplements(r).map(([a, b]) => `<li><b>${a}</b>${b}</li>`).join('');
 
   progress?.refresh();
   revealAll();
   if (scroll) setTimeout(() => $('#results').scrollIntoView({ behavior: 'smooth' }), 60);
+}
+
+function renderWorkout(r) {
+  const workout = buildWorkout(r);
+  $('#workoutTitle').textContent = workout.title;
+  $('#workoutMeta').textContent = r.input.days
+    ? `${r.input.days} sessions / week · ${r.input.style === 'strength' ? 'strength / hypertrophy' : r.input.style}`
+    : 'Start with simple movement';
+  if (!workout.days.length) {
+    $('#workoutPlan').innerHTML = `<p class="muted">${workout.prescription}</p><p class="workout-note">${workout.progression}</p>`;
+    return;
+  }
+  $('#workoutPlan').innerHTML = workout.days.map((session) => `
+    <article class="workout-session">
+      <div class="workout-head"><span>${session.day}</span><h3>${session.label}</h3></div>
+      <ul>${[...session.main, ...session.accessory].map((item, index) => `<li class="${index < session.main.length ? 'main-lift' : ''}"><b>${item.exercise}</b><span>${item.prescription}</span></li>`).join('')}</ul>
+    </article>`).join('') + `
+    <div class="workout-guidance"><p><b>How to run it:</b> ${workout.prescription}</p><p><b>Progress:</b> ${workout.progression}</p><p><b>Rest:</b> ${workout.rest}</p><p><b>Conditioning:</b> ${workout.conditioning}</p><p class="workout-safety">${workout.safety}</p></div>`;
 }
 
 function renderChart(r) {
