@@ -65,6 +65,19 @@ main, .nav, .foot { position: relative; z-index: 2; }
 .support-option.featured small { color: rgba(5,6,10,.68); }
 .support-option.featured i { background: rgba(5,6,10,.12); }
 
+.weight-range { position: relative; z-index: 2; width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 88px 0 10px; }
+.weight-range .section-head { max-width: 660px; margin-bottom: 24px; }
+.weight-range-card { display: grid; grid-template-columns: minmax(230px, .85fr) minmax(240px, 1fr); gap: 20px 28px; padding: 28px; border-color: rgba(200,255,46,.3); background: linear-gradient(135deg, rgba(200,255,46,.09), rgba(123,97,255,.09)); }
+.weight-range-input label { display: block; margin-bottom: 9px; font: 600 15px var(--display); }
+.weight-range-input label em { color: var(--muted); font: 400 12px var(--sans); }
+.weight-range-input input { width: 100%; padding: 15px 16px; border: 1px solid var(--line); border-radius: 13px; background: rgba(5,6,10,.46); }
+.weight-range-result { display: grid; align-content: center; gap: 3px; padding: 16px 20px; border-radius: 16px; background: #0c0d15; border: 1px solid rgba(200,255,46,.36); }
+.weight-range-result span { color: var(--muted); font-size: 12px; }
+.weight-range-result b { color: var(--a); font: 700 clamp(28px,4vw,40px) var(--display); letter-spacing: -.05em; }
+.weight-range-result small { color: #c1c7d5; }
+.weight-range-note { grid-column: 1 / -1; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.weight-range-note a { color: var(--a); }
+
 /* ---------- Nav ---------- */
 .nav {
   position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
@@ -444,6 +457,8 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
   .workout { padding: 20px 16px; }
   .workout-mark { width: 42px; height: 42px; flex-basis: 42px; border-radius: 14px; font-size: 24px; }
   .workout-title { font-size: 25px; }
+  .weight-range { padding-top: 64px; }
+  .weight-range-card { grid-template-columns: 1fr; padding: 20px 16px; }
   .cards { grid-template-columns: repeat(2, 1fr); }
   .macro { grid-column: span 12; }
   .mini-grid { grid-template-columns: repeat(2, 1fr); }

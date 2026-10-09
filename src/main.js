@@ -8,6 +8,7 @@ import { createProgress } from './progress.js';
 import { bodyErrors } from './validation.js';
 import { renderBodyFatCards } from './bodyfat.js';
 import { buildWorkout, EQUIPMENT_LABELS } from './workout.js';
+import { healthyWeightRange } from './healthy-weight.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -123,6 +124,20 @@ const bindRange = (id, fmt = (v) => v) => {
 bindRange('days');
 bindRange('meals');
 const updateBf = bindRange('bodyFat', (v) => `${v}%`);
+function renderHealthyWeightRange() {
+  const range = healthyWeightRange($('#weightRangeHeight').value);
+  const result = $('#weightRangeResult');
+  if (!range) {
+    result.hidden = true;
+    $('#weightRangeStatus').textContent = $('#weightRangeHeight').value ? 'Enter a height between 91 and 274 cm.' : '';
+    return;
+  }
+  result.hidden = false;
+  $('#weightRangeStatus').textContent = '';
+  $('#healthyWeightKg').textContent = `${range.minKg}–${range.maxKg} kg`;
+  $('#healthyWeightLb').textContent = `${range.minLb}–${range.maxLb} lb`;
+}
+$('#weightRangeHeight').addEventListener('input', renderHealthyWeightRange);
 $('#bodyFatOn').addEventListener('change', (e) => {
   $('#bodyFat').disabled = !e.target.checked;
   state.bodyFatSource = 'manual';

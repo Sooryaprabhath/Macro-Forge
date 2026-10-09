@@ -21,6 +21,7 @@
       <a href="#top" class="logo"><span class="logo-mark"></span><span>Macro<b>Forge</b></span></a>
       <nav>
         <a href="#plan">Planner</a>
+        <a href="#weight-range">Weight range</a>
         <a href="#results" class="nav-results hidden">My Plan</a>
         <details class="background-settings">
           <summary>Blur</summary>
@@ -78,6 +79,27 @@
             <h3>Get your blueprint</h3>
             <p>Macros, carb cycling, meal split, a sample day of eating and a food guide.</p>
           </article>
+        </div>
+      </section>
+
+      <section id="weight-range" class="weight-range">
+        <div class="section-head">
+          <p class="eyebrow"><span class="dot"></span>Adult BMI screening reference</p>
+          <h2>What weight range fits my height?</h2>
+          <p>Enter your height to see the adult BMI 18.5–24.9 reference range in kilograms and pounds.</p>
+        </div>
+        <div class="weight-range-card glass">
+          <div class="weight-range-input">
+            <label for="weightRangeHeight">Your height <em>cm</em></label>
+            <input id="weightRangeHeight" type="number" inputmode="decimal" min="91.44" max="274.32" step="0.1" placeholder="e.g. 175" aria-describedby="weightRangeStatus" />
+            <p id="weightRangeStatus" class="field-error" aria-live="polite"></p>
+          </div>
+          <div id="weightRangeResult" class="weight-range-result" hidden aria-live="polite">
+            <span>Healthy-weight screening range</span>
+            <b id="healthyWeightKg"></b>
+            <small id="healthyWeightLb"></small>
+          </div>
+          <p class="weight-range-note">BMI is a height-to-weight screening tool for adults, not an ideal-weight target or diagnosis. Muscle mass, body composition, ethnicity and medical context matter. <a href="https://www.cdc.gov/bmi/adult-calculator/index.html" target="_blank" rel="noopener noreferrer">CDC reference ↗</a> · <a href="https://www.who.int/europe/news-room/fact-sheets/item/nutrition---maintaining-a-healthy-lifestyle" target="_blank" rel="noopener noreferrer">WHO categories ↗</a></p>
         </div>
       </section>
 

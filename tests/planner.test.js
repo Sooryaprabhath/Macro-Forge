@@ -6,6 +6,7 @@ import { createPlanPdf, shoppingList } from '../src/pdf.js';
 import { FOOD_RECORDS } from '../src/food-data.js';
 import { calculateRecipe, validateFoodRecords } from '../src/recipes.js';
 import { buildWorkout, EQUIPMENT_LABELS } from '../src/workout.js';
+import { healthyWeightRange } from '../src/healthy-weight.js';
 
 const input = { sex: 'male', age: 25, weight: 75, height: 175, bodyFat: NaN, activity: 1.55, days: 4, style: 'strength', goal: 'maintain', pace: 'moderate', target: NaN, diet: 'omnivore', meals: 4, carbStyle: 'balanced', region: 'global' };
 
@@ -51,6 +52,12 @@ test('workout routines use equipment-appropriate exercises and offer swaps', () 
   }
   const homeRoutine = buildWorkout(calculate({ ...input, equipment: 'home', days: 1 }));
   assert.match(homeRoutine.days[0].main[0].exercise, /bodyweight|goblet/i);
+});
+
+test('healthy-weight range derives adult BMI screening weights from height', () => {
+  assert.deepEqual(healthyWeightRange(175), { heightCm: 175, minKg: 56.7, maxKg: 76.3, minLb: 125, maxLb: 168 });
+  assert.equal(healthyWeightRange(90), null);
+  assert.equal(healthyWeightRange(''), null);
 });
 
 test('regions change recommendations; unknown regions safely fall back to global', () => {
