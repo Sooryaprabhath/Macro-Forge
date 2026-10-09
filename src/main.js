@@ -642,22 +642,43 @@ $('#shuffleBtn').addEventListener('click', () => {
 });
 
 $('#editBtn').addEventListener('click', () => showStep(0));
+let pdfModulePromise;
+function loadPdfModule() {
+  pdfModulePromise ||= import('./pdf.js');
+  return pdfModulePromise;
+}
+// On phones this starts loading the export code before the user taps Download.
+// That keeps the actual tap available for Safari/Chrome's new-tab action.
+['pointerenter', 'focus'].forEach((eventName) => $('#printBtn').addEventListener(eventName, loadPdfModule, { once: true }));
 $('#printBtn').addEventListener('click', async () => {
   if (!state.result || !state.sampleDay) return;
   const button = $('#printBtn');
   const result = state.result;
   const day = state.sampleDay;
+  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // iOS browsers require a new tab to be created during the tap itself. Calling
+  // doc.save() after an awaited module load is commonly blocked there.
+  const pdfWindow = isiOS ? window.open('about:blank', '_blank') : null;
   button.disabled = true;
   button.textContent = 'Preparing PDF…';
   $('#exportStatus').textContent = 'Preparing your current plan and sample meals…';
   try {
-    const { createPlanPdf } = await import('./pdf.js');
+    const { createPlanPdf } = await loadPdfModule();
     const doc = createPlanPdf(result, day);
-    doc.save(`MacroForge-${result.input.goal}-${result.input.region}-${new Date().toISOString().slice(0, 10)}.pdf`);
-    $('#exportStatus').textContent = 'PDF download started. It contains your last generated plan and displayed sample day.';
+    if (pdfWindow) {
+      const pdfUrl = URL.createObjectURL(doc.output('blob'));
+      pdfWindow.location.replace(pdfUrl);
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
+      $('#exportStatus').textContent = 'Your PDF opened in a new tab. Use Share → Save to Files to keep it on your iPhone.';
+    } else {
+      doc.save(`MacroForge-${result.input.goal}-${result.input.region}-${new Date().toISOString().slice(0, 10)}.pdf`);
+      $('#exportStatus').textContent = 'PDF download started. It contains your last generated plan and displayed sample day.';
+    }
   } catch (error) {
+    pdfWindow?.close();
     console.error('PDF export failed', error);
-    $('#exportStatus').textContent = 'Could not create the PDF. Please try downloading again.';
+    $('#exportStatus').textContent = 'Could not create the PDF. Please try again after the plan has finished loading.';
   } finally {
     button.disabled = false;
     button.textContent = 'Download PDF';
