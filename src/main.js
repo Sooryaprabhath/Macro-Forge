@@ -411,7 +411,7 @@ function renderWorkout(r) {
     : 'Start with simple movement';
   $('#workoutPlan').hidden = true;
   toggle.setAttribute('aria-expanded', 'false');
-  toggle.textContent = r.input.days ? `View ${r.input.days} session${r.input.days === 1 ? '' : 's'} ↓` : 'View guidance ↓';
+  setWorkoutToggle(false, r.input.days);
   if (!workout.days.length) {
     $('#workoutPlan').innerHTML = `<p class="muted">${workout.prescription}</p><p class="workout-note">${workout.progression}</p>`;
     return;
@@ -420,11 +420,11 @@ function renderWorkout(r) {
     <article class="workout-session">
       <div class="workout-head"><span>${session.day}</span><h3>${session.label}</h3></div>
       <div class="workout-group priority-group">
-        <p><b>Priority</b><span>Do all 3</span></p>
+        <p><span class="priority-icon" aria-hidden="true">✓</span><b>Required today</b><small>Complete all 3 first</small></p>
         <ul>${session.main.map((item) => `<li><b>${item.exercise}</b><span>${item.prescription}</span></li>`).join('')}</ul>
       </div>
       <div class="workout-group accessory-group">
-        <p><b>Optional accessories</b><span>Do if time and recovery allow</span></p>
+        <p><span class="accessory-icon" aria-hidden="true">+</span><b>Optional extras</b><small>Only if time and recovery allow</small></p>
         <ul>${session.accessory.map((item) => `<li><b>${item.exercise}</b><span>${item.prescription}</span></li>`).join('')}</ul>
       </div>
     </article>`).join('') + `
@@ -437,10 +437,15 @@ $('#workoutToggle').addEventListener('click', () => {
   plan.hidden = expanded;
   $('#workoutToggle').setAttribute('aria-expanded', String(!expanded));
   const count = state.result?.input.days || 0;
-  $('#workoutToggle').textContent = expanded
-    ? (count ? `View ${count} session${count === 1 ? '' : 's'} ↓` : 'View guidance ↓')
-    : 'Hide sessions ↑';
+  setWorkoutToggle(!expanded, count);
 });
+
+function setWorkoutToggle(expanded, count) {
+  const sessions = count ? `${count} session${count === 1 ? '' : 's'}` : 'guidance';
+  $('#workoutToggle').innerHTML = expanded
+    ? `<span>Hide routine</span><i aria-hidden="true">↑</i>`
+    : `<span>Open my routine</span><em>${sessions}</em><i aria-hidden="true">↓</i>`;
+}
 
 function renderChart(r) {
   const W = 640, H = 230, P = { l: 44, r: 16, t: 18, b: 30 };

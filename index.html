@@ -368,12 +368,16 @@
           </article>
 
           <article class="glass tile workout">
-            <div class="tile-head">
-              <p class="tile-label">Your workout routine</p>
-              <button class="chip workout-toggle" id="workoutToggle" type="button" aria-expanded="false" aria-controls="workoutPlan">View sessions ↓</button>
+            <div class="workout-hero">
+              <div class="workout-mark" aria-hidden="true">↗</div>
+              <div>
+                <p class="tile-label">Training blueprint</p>
+                <h3 id="workoutTitle" class="workout-title"></h3>
+                <p class="workout-summary" id="workoutMeta"></p>
+              </div>
             </div>
-            <h3 id="workoutTitle" class="workout-title"></h3>
-            <p class="workout-summary" id="workoutMeta"></p>
+            <p class="workout-key"><b>Follow the bright “Required today” block first.</b> Optional work is only for days when you have time and feel recovered.</p>
+            <button class="workout-toggle" id="workoutToggle" type="button" aria-expanded="false" aria-controls="workoutPlan">Open my routine</button>
             <div id="workoutPlan" class="workout-plan" hidden></div>
           </article>
 
