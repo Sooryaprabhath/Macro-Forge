@@ -72,6 +72,7 @@ function setSeg(name, value) {
   $$('button', wrap).forEach((b) => b.classList.toggle('on', b.dataset.v === value));
   state[name] = value;
   if (name === 'sex') {
+    updateApplicability();
     renderBodyFatCards($('#bodyFatCards'), value);
     if (state.bodyFatSource === 'visual') {
       $('#bodyFatOn').checked = false;
@@ -84,12 +85,21 @@ function setSeg(name, value) {
   if (name === 'goal') onGoal();
   if (name === 'pace') updatePaceHint();
 }
+function updateApplicability() {
+  const field = $('#applicabilityField');
+  const select = $('#applicability');
+  const applies = state.sex === 'female';
+  field.hidden = !applies;
+  select.disabled = !applies;
+  if (!applies) select.value = 'standard';
+}
 $$('[data-name]').forEach((wrap) =>
   wrap.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (btn) setSeg(wrap.dataset.name, btn.dataset.v);
   })
 );
+updateApplicability();
 
 function onGoal() {
   document.body.dataset.goal = state.goal;
@@ -257,7 +267,7 @@ function readInput() {
     bodyFatSource: $('#bodyFatOn').checked ? state.bodyFatSource : 'formula',
     meals: num('meals'),
     carbStyle: state.carbStyle,
-    applicability: $('#applicability').value,
+    applicability: state.sex === 'female' ? $('#applicability').value : 'standard',
     allergens: $$('input[name="allergen"]:checked').map((el) => el.value),
     excludedFoods: $('#excludedFoods').value.split(',').map((value) => value.trim()).filter(Boolean),
   };
@@ -278,7 +288,7 @@ function updateWizardValidation(reveal = false) {
     $(`#${id}Error`).textContent = message;
   });
   const targetInvalid = state.step >= 2 && !$('#target').validity.valid;
-  const unsupported = $('#applicability').value !== 'standard';
+  const unsupported = state.sex === 'female' && $('#applicability').value !== 'standard';
   $('#nextBtn').disabled = !!Object.keys(errors).length || targetInvalid || unsupported;
   $('#wizardStatus').textContent = Object.keys(errors).length ? 'Enter a valid age, weight and height to continue. Body fat is optional.'
     : targetInvalid ? 'Enter a target weight between 30 and 300 kg, or leave it empty.'
