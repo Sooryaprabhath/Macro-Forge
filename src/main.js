@@ -404,10 +404,14 @@ function generate(scroll) {
 
 function renderWorkout(r) {
   const workout = buildWorkout(r);
+  const toggle = $('#workoutToggle');
   $('#workoutTitle').textContent = workout.title;
   $('#workoutMeta').textContent = r.input.days
-    ? `${r.input.days} sessions / week · ${r.input.style === 'strength' ? 'strength / hypertrophy' : r.input.style}`
+    ? `${r.input.days} sessions per week · ${r.input.style === 'strength' ? 'strength / hypertrophy' : r.input.style}. Open the sessions and follow one numbered session on each training day.`
     : 'Start with simple movement';
+  $('#workoutPlan').hidden = true;
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.textContent = r.input.days ? `View ${r.input.days} session${r.input.days === 1 ? '' : 's'} ↓` : 'View guidance ↓';
   if (!workout.days.length) {
     $('#workoutPlan').innerHTML = `<p class="muted">${workout.prescription}</p><p class="workout-note">${workout.progression}</p>`;
     return;
@@ -415,10 +419,28 @@ function renderWorkout(r) {
   $('#workoutPlan').innerHTML = workout.days.map((session) => `
     <article class="workout-session">
       <div class="workout-head"><span>${session.day}</span><h3>${session.label}</h3></div>
-      <ul>${[...session.main, ...session.accessory].map((item, index) => `<li class="${index < session.main.length ? 'main-lift' : ''}"><b>${item.exercise}</b><span>${item.prescription}</span></li>`).join('')}</ul>
+      <div class="workout-group priority-group">
+        <p><b>Priority</b><span>Do all 3</span></p>
+        <ul>${session.main.map((item) => `<li><b>${item.exercise}</b><span>${item.prescription}</span></li>`).join('')}</ul>
+      </div>
+      <div class="workout-group accessory-group">
+        <p><b>Optional accessories</b><span>Do if time and recovery allow</span></p>
+        <ul>${session.accessory.map((item) => `<li><b>${item.exercise}</b><span>${item.prescription}</span></li>`).join('')}</ul>
+      </div>
     </article>`).join('') + `
     <div class="workout-guidance"><p><b>How to run it:</b> ${workout.prescription}</p><p><b>Progress:</b> ${workout.progression}</p><p><b>Rest:</b> ${workout.rest}</p><p><b>Conditioning:</b> ${workout.conditioning}</p><p class="workout-safety">${workout.safety}</p></div>`;
 }
+
+$('#workoutToggle').addEventListener('click', () => {
+  const plan = $('#workoutPlan');
+  const expanded = $('#workoutToggle').getAttribute('aria-expanded') === 'true';
+  plan.hidden = expanded;
+  $('#workoutToggle').setAttribute('aria-expanded', String(!expanded));
+  const count = state.result?.input.days || 0;
+  $('#workoutToggle').textContent = expanded
+    ? (count ? `View ${count} session${count === 1 ? '' : 's'} ↓` : 'View guidance ↓')
+    : 'Hide sessions ↑';
+});
 
 function renderChart(r) {
   const W = 640, H = 230, P = { l: 44, r: 16, t: 18, b: 30 };

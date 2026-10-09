@@ -158,7 +158,10 @@ export function createPlanPdf(r, day, date = new Date()) {
   else {
     workout.days.forEach((session) => {
       heading(`${session.day}: ${session.label}`, '#28704e', '#edf6ef');
-      table(['Exercise', 'Sets and reps'], [...session.main, ...session.accessory].map((item) => [item.exercise, item.prescription]), [104, 70], { compact: true });
+      table(['Priority', 'Exercise', 'Sets and reps'], [
+        ...session.main.map((item) => ['Do', item.exercise, item.prescription]),
+        ...session.accessory.map((item) => ['Optional', item.exercise, item.prescription]),
+      ], [25, 85, 64], { compact: true });
     });
     heading('How to follow it');
     paragraph(workout.prescription, { size: 9 });

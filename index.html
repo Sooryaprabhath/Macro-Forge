@@ -370,10 +370,11 @@
           <article class="glass tile workout">
             <div class="tile-head">
               <p class="tile-label">Your workout routine</p>
-              <span class="pill" id="workoutMeta"></span>
+              <button class="chip workout-toggle" id="workoutToggle" type="button" aria-expanded="false" aria-controls="workoutPlan">View sessions ↓</button>
             </div>
             <h3 id="workoutTitle" class="workout-title"></h3>
-            <div id="workoutPlan" class="workout-plan"></div>
+            <p class="workout-summary" id="workoutMeta"></p>
+            <div id="workoutPlan" class="workout-plan" hidden></div>
           </article>
 
           <article class="glass tile sample">
