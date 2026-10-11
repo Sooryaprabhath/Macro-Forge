@@ -747,10 +747,20 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 .constraint-grid label { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); }
 .constraint-grid input { accent-color: var(--a); }
 .health-screen { margin-top: 20px; padding: 18px; border: 1px solid rgba(166,150,255,.28); border-radius: 16px; background: rgba(166,150,255,.055); }
+.health-screen.has-selection { border-color: rgba(200,255,46,.42); }
 .health-screen legend { padding: 0 6px; }
 .health-screen legend em { color: var(--muted); font: 400 12px 'Inter', system-ui, sans-serif; }
 .health-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 12px 0; }
+.health-grid-primary { margin-top: 14px; }
 .health-grid label:has(input:checked) { color: var(--fg); border-color: var(--p); background: rgba(166,150,255,.12); }
+.health-more { margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.health-more > summary { display: flex; align-items: center; min-height: 48px; padding: 10px 46px 10px 12px; position: relative; color: var(--fg); font: 600 13px var(--display); cursor: pointer; list-style: none; }
+.health-more > summary::-webkit-details-marker { display: none; }
+.health-more > summary::after { content: ''; position: absolute; right: 17px; top: 50%; width: 8px; height: 8px; border-right: 2px solid var(--p); border-bottom: 2px solid var(--p); transform: translateY(-70%) rotate(45deg); transform-origin: center; transition: transform .25s var(--ease); }
+.health-more[open] > summary::after { transform: translateY(-25%) rotate(225deg); }
+.health-more > summary em { margin-left: auto; color: var(--muted); font: 600 11px var(--display); white-space: nowrap; }
+.health-more.has-selection > summary em { padding: 4px 8px; border-radius: 999px; background: var(--a); color: #05060a; }
+.health-more > .health-grid { margin: 0; padding: 4px 12px 12px; border-top: 1px solid var(--line); }
 .health-evidence { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
 .health-evidence summary { color: #d6f58e; font: 600 13px var(--display); cursor: pointer; }
 .health-evidence > p { margin: 10px 0; color: var(--muted); font-size: 12px; }

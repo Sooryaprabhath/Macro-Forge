@@ -262,20 +262,25 @@
               <p class="hint" id="bodyFatSelection" role="status">No visual estimate selected. You can leave body fat off.</p>
               <a class="guide-source" href="https://health.clevelandclinic.org/bmi-for-men" target="_blank" rel="noopener noreferrer">About body composition measurements ↗</a>
             </details>
-            <fieldset class="field constraint-field health-screen">
+            <fieldset class="field constraint-field health-screen" id="healthScreen">
               <legend>Health and medication safety check <em>optional</em></legend>
               <p class="hint">Select any condition diagnosed or currently managed. Guideline-informed safeguards will adjust what MacroForge can recommend.</p>
-              <div class="constraint-grid health-grid">
+              <div class="constraint-grid health-grid health-grid-primary" role="group" aria-label="Common health considerations">
                 <label><input type="checkbox" name="healthCondition" value="fatty_liver" /> Fatty liver / MASLD</label>
                 <label><input type="checkbox" name="healthCondition" value="high_cholesterol" /> High cholesterol</label>
                 <label><input type="checkbox" name="healthCondition" value="diabetes" /> Diabetes / blood sugar</label>
-                <label><input type="checkbox" name="healthCondition" value="hypertension" /> High blood pressure</label>
-                <label><input type="checkbox" name="healthCondition" value="kidney_disease" /> Kidney disease</label>
-                <label><input type="checkbox" name="healthCondition" value="liver_disease" /> Other liver disease</label>
-                <label><input type="checkbox" name="healthCondition" value="eating_disorder" /> Eating disorder history</label>
-                <label><input type="checkbox" name="healthCondition" value="medication" /> Relevant medication</label>
-                <label><input type="checkbox" name="healthCondition" value="other_medical" /> Other medical condition</label>
               </div>
+              <details class="health-more" id="healthMore">
+                <summary><span>More health considerations</span><em id="healthMoreCount">6 more</em></summary>
+                <div class="constraint-grid health-grid" role="group" aria-label="More health considerations">
+                  <label><input type="checkbox" name="healthCondition" value="hypertension" /> High blood pressure</label>
+                  <label><input type="checkbox" name="healthCondition" value="kidney_disease" /> Kidney disease</label>
+                  <label><input type="checkbox" name="healthCondition" value="liver_disease" /> Other liver disease</label>
+                  <label><input type="checkbox" name="healthCondition" value="eating_disorder" /> Eating disorder history</label>
+                  <label><input type="checkbox" name="healthCondition" value="medication" /> Relevant medication</label>
+                  <label><input type="checkbox" name="healthCondition" value="other_medical" /> Other medical condition</label>
+                </div>
+              </details>
               <p class="hint" id="healthSafetyHint" aria-live="polite">No selection means no condition has been disclosed.</p>
               <details class="health-evidence">
                 <summary>Clinical guidelines behind this safety check</summary>

@@ -122,6 +122,11 @@ $('#healthEvidenceList').innerHTML = HEALTH_EVIDENCE.map(({ topic, citation, yea
 function updateHealthSafety() {
   const safety = medicalSafety({ healthConditions: selectedHealthConditions() });
   const hasCondition = safety.requiresClinicalReview;
+  $('#healthScreen').classList.toggle('has-selection', hasCondition);
+  const moreConditions = new Set(['hypertension', 'kidney_disease', 'liver_disease', 'eating_disorder', 'medication', 'other_medical']);
+  const moreSelected = safety.conditions.filter((condition) => moreConditions.has(condition)).length;
+  $('#healthMore').classList.toggle('has-selection', moreSelected > 0);
+  $('#healthMoreCount').textContent = moreSelected ? `${moreSelected} selected` : '6 more';
   const aggressive = $('[data-name="pace"] [data-v="aggressive"]');
   aggressive.disabled = hasCondition && state.goal !== 'maintain';
   aggressive.setAttribute('aria-disabled', String(aggressive.disabled));
