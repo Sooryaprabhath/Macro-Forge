@@ -7,8 +7,30 @@ import { FOOD_RECORDS } from '../src/food-data.js';
 import { calculateRecipe, validateFoodRecords } from '../src/recipes.js';
 import { buildWorkout, EQUIPMENT_LABELS } from '../src/workout.js';
 import { healthyWeightRange } from '../src/healthy-weight.js';
+import { HEALTH_EVIDENCE, medicalSafety, safePlanningPace } from '../src/medical.js';
 
 const input = { sex: 'male', age: 25, weight: 75, height: 175, bodyFat: NaN, activity: 1.55, days: 4, style: 'strength', goal: 'maintain', pace: 'moderate', target: NaN, diet: 'omnivore', meals: 4, carbStyle: 'balanced', region: 'global' };
+
+test('health considerations prevent aggressive planning and provide condition-specific review notes', () => {
+  assert.equal(new Set(HEALTH_EVIDENCE.map((item) => item.condition)).size, HEALTH_EVIDENCE.length);
+  assert.ok(HEALTH_EVIDENCE.every((item) => item.citation && item.year && /^https:\/\//.test(item.url)));
+  assert.equal(safePlanningPace('cut', 'aggressive', []), 'aggressive');
+  assert.equal(safePlanningPace('cut', 'aggressive', ['fatty_liver']), 'moderate');
+  const result = calculate({ ...input, goal: 'cut', pace: 'aggressive', healthConditions: ['fatty_liver', 'high_cholesterol', 'unknown'] });
+  assert.equal(result.input.pace, 'moderate');
+  assert.equal(result.input.requestedPace, 'aggressive');
+  const safety = medicalSafety(result.input);
+  assert.deepEqual(safety.labels, ['Fatty liver / MASLD', 'High cholesterol']);
+  assert.equal(safety.supplementsAllowed, false);
+  assert.match(safety.guidance.join(' '), /gradual/i);
+  assert.match(safety.guidance.join(' '), /soluble-fiber/i);
+  assert.equal(medicalSafety({ healthConditions: ['kidney_disease'] }).requiresIndividualPlan, true);
+  assert.equal(medicalSafety({ healthConditions: ['fatty_liver'] }).requiresIndividualPlan, false);
+  const pdfText = createPlanPdf(result, buildSampleDay(result, 1)).internal.pages.flat().join('\n');
+  assert.ok(pdfText.includes('(Health considerations)'));
+  assert.ok(pdfText.includes('Supplement suggestions are omitted because a selected condition or medication may change safety'));
+  assert.ok(!pdfText.includes('(Creatine monohydrate)'));
+});
 
 test('every region and diet generates finite meals using only permitted local foods', () => {
   for (const region of Object.keys(REGIONS)) for (const diet of ['omnivore', 'eggetarian', 'vegetarian', 'vegan']) {

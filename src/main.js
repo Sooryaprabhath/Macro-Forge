@@ -9,6 +9,7 @@ import { bodyErrors } from './validation.js';
 import { renderBodyFatCards } from './bodyfat.js';
 import { buildWorkout, EQUIPMENT_LABELS } from './workout.js';
 import { healthyWeightRange } from './healthy-weight.js';
+import { HEALTH_EVIDENCE, medicalSafety } from './medical.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -111,9 +112,31 @@ function onGoal() {
   document.body.dataset.goal = state.goal;
   bg.setGoal(state.goal);
   $('.pace-field').classList.toggle('disabled', state.goal === 'maintain');
+  updateHealthSafety();
+}
+const selectedHealthConditions = () => $$('input[name="healthCondition"]:checked').map((el) => el.value);
+$('#healthEvidenceList').innerHTML = HEALTH_EVIDENCE.map(({ topic, citation, year, url }) => `
+  <a href="${url}" target="_blank" rel="noopener noreferrer">
+    <span>${topic}</span><b>${citation}</b><em>${year} ↗</em>
+  </a>`).join('');
+function updateHealthSafety() {
+  const safety = medicalSafety({ healthConditions: selectedHealthConditions() });
+  const hasCondition = safety.requiresClinicalReview;
+  const aggressive = $('[data-name="pace"] [data-v="aggressive"]');
+  aggressive.disabled = hasCondition && state.goal !== 'maintain';
+  aggressive.setAttribute('aria-disabled', String(aggressive.disabled));
+  if (aggressive.disabled && state.pace === 'aggressive') setSeg('pace', 'moderate');
+  $('#healthSafetyHint').textContent = safety.requiresIndividualPlan
+    ? 'This selection needs individualized nutrition targets. MacroForge will not generate a generic plan; please use a qualified clinician or dietitian.'
+    : hasCondition
+    ? 'Aggressive weight change is unavailable. Supplement suggestions will be omitted until a clinician reviews the plan.'
+    : 'No selection means no condition has been disclosed.';
   updatePaceHint();
 }
-const updatePaceHint = () => ($('#paceHint').textContent = paceHint(state.goal, state.pace));
+function updatePaceHint() {
+  const hasCondition = selectedHealthConditions().length > 0;
+  $('#paceHint').textContent = `${paceHint(state.goal, state.pace)}${hasCondition && state.goal !== 'maintain' ? ' Health considerations selected: moderate is the fastest available pace.' : ''}`;
+}
 
 // ---------- Ranges ----------
 const bindRange = (id, fmt = (v) => v) => {
@@ -310,6 +333,7 @@ function readInput() {
     meals: num('meals'),
     carbStyle: state.carbStyle,
     applicability: state.sex === 'female' ? $('#applicability').value : 'standard',
+    healthConditions: selectedHealthConditions(),
     allergens: $$('input[name="allergen"]:checked').map((el) => el.value),
     excludedFoods: $('#excludedFoods').value.split(',').map((value) => value.trim()).filter(Boolean),
   };
@@ -331,15 +355,18 @@ function updateWizardValidation(reveal = false) {
   });
   const targetInvalid = state.step >= 2 && !$('#target').validity.valid;
   const unsupported = state.sex === 'female' && $('#applicability').value !== 'standard';
-  $('#nextBtn').disabled = !!Object.keys(errors).length || targetInvalid || unsupported;
+  const individualPlanRequired = medicalSafety({ healthConditions: selectedHealthConditions() }).requiresIndividualPlan;
+  $('#nextBtn').disabled = !!Object.keys(errors).length || targetInvalid || unsupported || individualPlanRequired;
   $('#wizardStatus').textContent = Object.keys(errors).length ? 'Enter a valid age, weight and height to continue. Body fat is optional.'
     : targetInvalid ? 'Enter a target weight between 30 and 300 kg, or leave it empty.'
-    : unsupported ? 'MacroForge does not calculate targets for pregnancy, breastfeeding, or medical nutrition management. Please use a qualified clinician.' : '';
+    : unsupported ? 'MacroForge does not calculate targets for pregnancy or breastfeeding. Please use a qualified clinician.'
+    : individualPlanRequired ? 'Kidney disease, other liver disease, and eating-disorder recovery need individualized targets from a qualified clinician or dietitian.' : '';
   return !$('#nextBtn').disabled;
 }
 $('#form').addEventListener('submit', (e) => e.preventDefault());
 $('#form').addEventListener('input', (e) => {
   touched.add(e.target.id);
+  if (e.target.matches('input[name="healthCondition"]')) updateHealthSafety();
   updateWizardValidation();
 });
 $('#form').addEventListener('focusout', (e) => {
@@ -453,7 +480,28 @@ function generate(scroll) {
   renderSample(r);
   renderWorkout(r);
   $('#tips').innerHTML = coachTips(r).map((t) => `<li>${t}</li>`).join('');
-  $('#supps').innerHTML = supplements(r).map(([a, b]) => `<li><b>${a}</b>${b}</li>`).join('');
+  const safety = medicalSafety(r.input);
+  $('#medicalNotice').classList.toggle('hidden', !safety.requiresClinicalReview);
+  if (safety.requiresClinicalReview) {
+    $('#medicalNoticeSummary').textContent = `You selected: ${safety.labels.join(', ')}. Confirm calorie, nutrient, training and supplement targets with a qualified clinician who knows your history.`;
+    $('#medicalGuidance').innerHTML = safety.guidance.map((item) => `<li>${item}</li>`).join('');
+    $('#medicalSources').replaceChildren();
+    if (safety.sources.length) {
+      $('#medicalSources').append('Health references: ');
+      safety.sources.forEach(([label, url], index) => {
+        if (index) $('#medicalSources').append(' · ');
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = `${label} ↗`;
+        $('#medicalSources').append(link);
+      });
+    }
+  }
+  $('#supps').innerHTML = safety.supplementsAllowed
+    ? supplements(r).map(([a, b]) => `<li><b>${a}</b>${b}</li>`).join('')
+    : '<li><b>Clinician review required</b>Supplement suggestions are omitted because a selected condition or medication may change safety, dosage or interactions.</li>';
 
   progress?.refresh();
   revealAll();
@@ -754,7 +802,8 @@ $('#printBtn').addEventListener('click', async () => {
 const INPUT_IDS = ['age', 'weight', 'heightCm', 'heightFt', 'heightFtIn', 'bodyFat', 'days', 'target', 'meals', 'region', 'applicability', 'excludedFoods'];
 function snapshotInputs() {
   return Object.fromEntries([...INPUT_IDS.map((id) => [id, $(`#${id}`).value]), ['bodyFatOn', $('#bodyFatOn').checked],
-    ['allergens', $$('input[name="allergen"]:checked').map((el) => el.value)]]);
+    ['allergens', $$('input[name="allergen"]:checked').map((el) => el.value)],
+    ['healthConditions', selectedHealthConditions()]]);
 }
 function restore() {
   try {
@@ -765,17 +814,20 @@ function restore() {
     state.seed = Number.isInteger(saved.seed) ? saved.seed : 1;
     Object.entries(saved.inputs || {}).forEach(([id, v]) => {
       if (id === 'allergens') { $$('input[name="allergen"]').forEach((el) => { el.checked = v.includes(el.value); }); return; }
+      if (id === 'healthConditions') { $$('input[name="healthCondition"]').forEach((el) => { el.checked = Array.isArray(v) && v.includes(el.value); }); return; }
       const el = $(`#${id}`);
       if (!el) return;
       if (el.type === 'checkbox') el.checked = v;
       else el.value = v;
     });
+    if (!['standard', 'pregnant', 'breastfeeding'].includes($('#applicability').value)) $('#applicability').value = 'standard';
     $('#bodyFat').disabled = !$('#bodyFatOn').checked;
     ['sex', 'activity', 'style', 'equipment', 'goal', 'pace', 'diet', 'carbStyle'].forEach((k) => saved[k] && setSeg(k, saved[k]));
     updateRegion();
     $$('input[type=range]').forEach((el) => el.dispatchEvent(new Event('input')));
     state.bodyFatSource = saved.bodyFatSource === 'visual' ? 'visual' : 'manual';
     syncBodyFatSelection();
+    updateHealthSafety();
     return true;
   } catch {
     return false;
@@ -809,4 +861,5 @@ document.addEventListener('pointermove', (e) => {
 progress = createProgress(() => state.result, () => showStep(0));
 syncUnitUI();
 onGoal();
+updateHealthSafety();
 showStep(0, false);

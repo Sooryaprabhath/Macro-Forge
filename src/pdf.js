@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { foodGuide, regionInfo, coachTips, supplements, FOOD_GUIDE_SECTIONS } from './foods.js';
 import { buildWorkout } from './workout.js';
+import { medicalSafety } from './medical.js';
 
 // Built from the result snapshot, never animated DOM values or WebGL canvases.
 const clean = (value) => String(value).replace(/[–—‑−]/g, '-').replace(/[‘’]/g, "'")
@@ -95,12 +96,14 @@ export function createPlanPdf(r, day, date = new Date()) {
   };
   const goal = { cut: 'Cutting', maintain: 'Recomposition', bulk: 'Lean bulk' }[r.input.goal];
   const source = r.input.bodyFatSource === 'visual' ? 'rough visual estimate' : r.bfKnown ? 'user-entered value' : 'BMI-based formula estimate';
+  const safety = medicalSafety(r.input);
   sectionNumber = 1;
   pageHeader('YOUR DAILY BLUEPRINT');
   text('A plan built around you.', left, y + 2, 25, true); y += 13;
   paragraph(`${goal} / ${r.input.meals} meals / ${r.input.days} training days per week`, { size: 11 });
   paragraph(`${r.input.sex} | ${r.input.age} years | ${r.input.weight} kg | ${Math.round(r.input.height)} cm`, { size: 9.5, gap: 2 });
   paragraph(`${regionInfo(r.input.region).label} | ${r.input.diet} | ${r.input.carbStyle} | ${r.input.pace} pace`, { size: 9.5, gap: 7 });
+  if (safety.requiresClinicalReview) note(`CLINICIAN REVIEW RECOMMENDED: ${safety.labels.join(', ')} selected. This plan is a general estimate; confirm calorie, nutrient, training and supplement targets with a qualified clinician.`);
   box(left, y - 2, width, 38, ink);
   text('DAILY ENERGY', left + 7, y + 7, 8, true, '#d0c8ed');
   text(r.calories.toLocaleString('en-US'), left + 7, y + 25, 32, true, '#d6f58e');
@@ -211,6 +214,12 @@ export function createPlanPdf(r, day, date = new Date()) {
     guide[key].forEach(([title, body]) => guideEntry(title, body, colors[key]));
   }
   newPage('COACH NOTES / PUT IT INTO PRACTICE');
+  if (safety.requiresClinicalReview) {
+    heading('Health considerations', '#a24250', '#fbedef');
+    safety.guidance.forEach((item) => paragraph(item, { size: 9, gap: 3 }));
+    note('These notes are general education. They do not diagnose, treat, or replace advice from a clinician who knows your history.');
+    safety.sources.forEach(([label, url]) => paragraph(`${label}: ${url}`, { size: 8, gap: 2 }));
+  }
   heading('Build consistency');
   coachTips(r).forEach((tip, i) => {
     const lines = wrap(tip, width - 12, 10); ensure(lines.length * 4.6 + 9);
@@ -219,7 +228,8 @@ export function createPlanPdf(r, day, date = new Date()) {
     y += 6;
   });
   heading('Supplement notes');
-  supplements(r).forEach(([title, body]) => guideEntry(title, body));
+  if (safety.supplementsAllowed) supplements(r).forEach(([title, body]) => guideEntry(title, body));
+  else paragraph('Supplement suggestions are omitted because a selected condition or medication may change safety, dosage or interactions. Review supplements with your clinician or pharmacist.', { size: 9 });
   heading('About your estimates');
   paragraph(`Body fat: ${r.bodyFat}% (${source}). The body-shape guide is an AI-generated illustration, not a validated measurement tool. Appearance alone cannot determine body fat.`, { size: 9 });
   paragraph('Body composition measurement information: health.clevelandclinic.org/bmi-for-men', { size: 9 });

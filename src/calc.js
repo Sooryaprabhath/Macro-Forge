@@ -1,5 +1,7 @@
 // Core nutrition engine. All inputs metric (kg, cm).
 
+import { normalizeHealthConditions, safePlanningPace } from './medical.js';
+
 const KCAL_PER_KG = 7700;
 
 const RATES = {
@@ -40,6 +42,11 @@ export function estimateBodyFat({ sex, age, weight, height }) {
 }
 
 export function calculate(input) {
+  const healthConditions = normalizeHealthConditions(input.healthConditions);
+  const requestedPace = input.pace;
+  const safePace = safePlanningPace(input.goal, requestedPace, healthConditions);
+  input = { ...input, healthConditions, pace: safePace };
+  if (safePace !== requestedPace) input.requestedPace = requestedPace;
   const { sex, age, weight, height, activity, days, style, goal, pace, carbStyle, meals } = input;
   const bfKnown = Number.isFinite(input.bodyFat);
   const bodyFat = bfKnown ? input.bodyFat : estimateBodyFat(input);

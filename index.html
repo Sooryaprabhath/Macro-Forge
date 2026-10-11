@@ -201,14 +201,13 @@
               </div>
             </div>
             <div class="field" id="applicabilityField" hidden>
-              <label for="applicability">Planner applicability</label>
+              <label for="applicability">Pregnancy and breastfeeding</label>
               <select id="applicability" name="applicability" aria-describedby="applicabilityHint">
                 <option value="standard">Adult, not pregnant or breastfeeding</option>
                 <option value="pregnant">Pregnant</option>
                 <option value="breastfeeding">Breastfeeding</option>
-                <option value="medical">Medical nutrition management required</option>
               </select>
-              <p class="hint" id="applicabilityHint">This research-based estimate is for generally healthy adults. Other selections require an appropriately qualified clinician.</p>
+              <p class="hint" id="applicabilityHint">Pregnancy and breastfeeding need individual energy and nutrient guidance from an appropriately qualified clinician.</p>
             </div>
 
             <div class="grid-2">
@@ -263,6 +262,27 @@
               <p class="hint" id="bodyFatSelection" role="status">No visual estimate selected. You can leave body fat off.</p>
               <a class="guide-source" href="https://health.clevelandclinic.org/bmi-for-men" target="_blank" rel="noopener noreferrer">About body composition measurements ↗</a>
             </details>
+            <fieldset class="field constraint-field health-screen">
+              <legend>Health and medication safety check <em>optional</em></legend>
+              <p class="hint">Select any condition diagnosed or currently managed. Guideline-informed safeguards will adjust what MacroForge can recommend.</p>
+              <div class="constraint-grid health-grid">
+                <label><input type="checkbox" name="healthCondition" value="fatty_liver" /> Fatty liver / MASLD</label>
+                <label><input type="checkbox" name="healthCondition" value="high_cholesterol" /> High cholesterol</label>
+                <label><input type="checkbox" name="healthCondition" value="diabetes" /> Diabetes / blood sugar</label>
+                <label><input type="checkbox" name="healthCondition" value="hypertension" /> High blood pressure</label>
+                <label><input type="checkbox" name="healthCondition" value="kidney_disease" /> Kidney disease</label>
+                <label><input type="checkbox" name="healthCondition" value="liver_disease" /> Other liver disease</label>
+                <label><input type="checkbox" name="healthCondition" value="eating_disorder" /> Eating disorder history</label>
+                <label><input type="checkbox" name="healthCondition" value="medication" /> Relevant medication</label>
+                <label><input type="checkbox" name="healthCondition" value="other_medical" /> Other medical condition</label>
+              </div>
+              <p class="hint" id="healthSafetyHint" aria-live="polite">No selection means no condition has been disclosed.</p>
+              <details class="health-evidence">
+                <summary>Clinical guidelines behind this safety check</summary>
+                <p>These references support the screening rules and condition-specific cautions. They do not clinically validate MacroForge or replace personal medical care.</p>
+                <div class="health-evidence-list" id="healthEvidenceList"></div>
+              </details>
+            </fieldset>
           </fieldset>
 
           <!-- STEP 2 -->
@@ -404,6 +424,15 @@
           <p class="sub" id="resultsSub"></p>
           <a class="guide-source" href="#progressHistory">Save a check-in or compare progress ↓</a>
         </div>
+
+        <article class="glass medical-notice hidden" id="medicalNotice" aria-live="polite">
+          <p class="medical-kicker">Health-aware plan</p>
+          <h3>Clinician review recommended</h3>
+          <p id="medicalNoticeSummary"></p>
+          <ul id="medicalGuidance"></ul>
+          <p class="medical-footnote">These notes are general education. They do not diagnose, treat, or replace your clinician’s advice.</p>
+          <p class="medical-sources" id="medicalSources"></p>
+        </article>
 
         <div class="bento">
           <article class="glass tile kcal">
