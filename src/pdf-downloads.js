@@ -2,6 +2,7 @@ export function setupPdfDownloads(getSnapshot) {
   const $ = (id) => document.getElementById(id);
   const dialog = $('pdfPaymentDialog');
   const status = $('pdfPaymentStatus');
+  const purchaseStore = 'macroforge:pdf-purchase:v1';
   let snapshot = null, raw = '', checkoutUrl = '', poll = null, checking = false;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -53,11 +54,12 @@ export function setupPdfDownloads(getSnapshot) {
   $('closePdfPayment').addEventListener('click', () => dialog.close());
   const paid = () => {
     stopPolling();
+    $('pdfPaymentTitle').textContent = 'Payment successful';
     $('payPdfBtn').hidden = true;
     $('pdfCheckoutLink').hidden = true;
     $('verifyPdfPayment').hidden = true;
     $('downloadPaidPdf').hidden = false;
-    status.textContent = 'Payment confirmed. Your full PDF is ready to download.';
+    status.textContent = 'Your ₹9 payment is confirmed. Download your full PDF below.';
   };
   const check = async () => {
     if (checking || !dialog.open) return;
@@ -69,7 +71,7 @@ export function setupPdfDownloads(getSnapshot) {
       status.textContent = ['expired', 'cancelled'].includes(data.status)
         ? 'This checkout has expired or been cancelled. Start a new checkout to continue.'
         : 'Waiting for payment confirmation. Complete payment in Razorpay, then check again.';
-      if (['expired', 'cancelled'].includes(data.status)) stopPolling();
+      if (['expired', 'cancelled'].includes(data.status)) { stopPolling(); return true; }
     } catch (error) { status.textContent = error.message; }
     finally { checking = false; $('verifyPdfPayment').disabled = false; }
     return false;
@@ -88,6 +90,7 @@ export function setupPdfDownloads(getSnapshot) {
     $('pdfCheckoutLink').hidden = true;
     $('verifyPdfPayment').hidden = true;
     $('downloadPaidPdf').hidden = true;
+    $('pdfPaymentTitle').textContent = 'Your complete plan, saved.';
     status.textContent = '';
     dialog.showModal();
   });
@@ -103,6 +106,10 @@ export function setupPdfDownloads(getSnapshot) {
       const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
       const digest = [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
       const data = await (await api('/api/payment/start', JSON.stringify({ digest }))).json();
+      // The payment window returns to a fresh page. Keep the exact purchased
+      // snapshot on this origin so that page can generate the same paid PDF.
+      try { localStorage.setItem(purchaseStore, JSON.stringify({ raw, expires: Date.now() + 86400_000 })); }
+      catch { throw new Error('Please allow browser storage before paying so your plan can be restored after checkout.'); }
       if (data.paid) { checkout?.close(); paid(); return; }
       checkoutUrl = data.url;
       if (!/^https:\/\/rzp\.io\//.test(checkoutUrl)) throw new Error('Invalid checkout address. Please try again.');
@@ -111,7 +118,7 @@ export function setupPdfDownloads(getSnapshot) {
       $('verifyPdfPayment').hidden = false;
       if (checkout) checkout.location.href = checkoutUrl;
       status.textContent = checkout
-        ? 'Complete payment in the Razorpay window, then return here. We’ll check for confirmation.'
+        ? 'Complete payment in the Razorpay window. You’ll return to MacroForge for confirmation and your PDF.'
         : 'Use “Open payment window” to pay, then return here and check payment.';
       stopPolling();
       const deadline = Date.now() + 5 * 60_000;
@@ -139,4 +146,31 @@ export function setupPdfDownloads(getSnapshot) {
       pdfWindow?.close(); status.textContent = error.message;
     } finally { button.disabled = false; }
   });
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('pdf_payment') === 'return') {
+    params.delete('pdf_payment');
+    history.replaceState(null, '', window.location.pathname + (params.size ? `?${params}` : '') + window.location.hash);
+    $('payPdfBtn').hidden = true;
+    $('pdfCheckoutLink').hidden = true;
+    $('verifyPdfPayment').hidden = false;
+    $('downloadPaidPdf').hidden = true;
+    $('pdfPaymentTitle').textContent = 'Confirming your payment…';
+    dialog.showModal();
+    try {
+      const saved = JSON.parse(localStorage.getItem(purchaseStore));
+      if (!saved || saved.expires <= Date.now() || typeof saved.raw !== 'string') throw new Error('No saved purchase');
+      const parsed = JSON.parse(saved.raw);
+      if (!parsed.result?.input || !Array.isArray(parsed.day)) throw new Error('Invalid saved purchase');
+      raw = saved.raw;
+      snapshot = parsed;
+      status.textContent = 'Checking your payment securely with Razorpay…';
+      // A return URL alone never unlocks a report or displays payment success.
+      void check();
+    } catch {
+      $('pdfPaymentTitle').textContent = 'Return to your original plan';
+      $('verifyPdfPayment').hidden = true;
+      status.textContent = 'The purchased plan is not available in this browser. Return to the original MacroForge tab to check payment and download. Please do not pay again.';
+    }
+  }
 }

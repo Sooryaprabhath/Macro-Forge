@@ -90,6 +90,7 @@ export async function handlePayment(request, env, { fetcher = fetch, render } = 
       const link = await api('', { method: 'POST', body: JSON.stringify({
         amount: PRICE, currency: 'INR', accept_partial: false,
         description: 'MacroForge full plan PDF',
+        callback_url: `${new URL(request.url).origin}/payment/return`, callback_method: 'get',
         reference_id: crypto.randomUUID(), expire_by: Math.floor(Date.now() / 1000) + 3600,
         notify: { sms: false, email: false }, reminder_enable: false,
         notes: { plan_digest: data.digest },

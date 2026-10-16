@@ -5,6 +5,7 @@ import { createBasicPdf } from '../src/basic-pdf.js';
 import { createPlanPdf } from '../src/pdf.js';
 import { calculate } from '../src/calc.js';
 import { buildSampleDay } from '../src/foods.js';
+import worker from '../src/worker.js';
 
 const env = { RAZORPAY_KEY_ID: 'test-id', RAZORPAY_KEY_SECRET: 'test-only-secret' };
 const origin = 'https://macroforge.example';
@@ -36,10 +37,20 @@ test('checkout charges exactly INR 9 without sending plan data to Razorpay', asy
   assert.equal(payload.amount, 900);
   assert.equal(payload.currency, 'INR');
   assert.equal(payload.accept_partial, false);
+  assert.equal(payload.callback_url, `${origin}/payment/return`);
+  assert.equal(payload.callback_method, 'get');
   assert.equal(payload.customer, undefined);
   assert.equal(payload.result, undefined);
   assert.equal(Object.keys(payload.notes).join(), 'plan_digest');
   assert.match(cookie, /^macroforge_pdf=/);
+});
+
+test('payment return strips all callback claims and redirects to server verification UI', async () => {
+  const response = await worker.fetch(new Request(`${origin}/payment/return?razorpay_payment_link_status=paid&razorpay_signature=forged`), {});
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get('location'), '/?pdf_payment=return');
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
 });
 
 test('missing configuration and cross-origin requests cannot start payments', async () => {
