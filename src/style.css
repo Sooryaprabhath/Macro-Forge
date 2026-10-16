@@ -468,6 +468,17 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 .medical-sources a { color: #d6f58e; text-underline-offset: 3px; }
 
 .results-actions { display: flex; justify-content: center; gap: 12px; margin-top: 40px; flex-wrap: wrap; }
+.pdf-payment { margin: auto; width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 40px); padding: 30px; border: 1px solid var(--line); border-radius: 24px; background: #11131e; color: var(--fg); overflow-y: auto; }
+.pdf-payment::backdrop { background: rgba(0,0,0,.76); backdrop-filter: blur(8px); }
+.pdf-payment h2 { font: 600 clamp(24px, 5vw, 32px) var(--display); line-height: 1.15; margin: 14px 0; }
+.pdf-payment > p { margin-bottom: 18px; }
+.pdf-payment .eyebrow { padding-right: 30px; }
+.pdf-payment-close { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.08); color: var(--fg); font-size: 26px; }
+.pdf-storage-warning { padding: 16px; border: 1px solid rgba(200,255,46,.3); border-radius: 14px; background: var(--a-soft); font-size: 13px; line-height: 1.6; }
+.pdf-storage-warning b { display: block; color: var(--a); margin-bottom: 5px; }
+.pdf-payment-actions { display: flex; flex-direction: column; gap: 10px; }
+.pdf-payment-actions .btn { justify-content: center; text-align: center; }
+.pdf-payment [hidden] { display: none !important; }
 .disclaimer { text-align: center; color: var(--muted); font-size: 12px; margin: 22px auto 0; max-width: 600px; }
 
 .foot { display: flex; justify-content: space-between; width: min(1180px, calc(100% - 32px)); margin: 60px auto 0; padding: 30px 0; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }

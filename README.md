@@ -35,13 +35,13 @@ Vite generates deployment files in `dist/`.
 - `src/ring3d.js`: 3D macro ring
 - `src/style.css`: styles
 
-Plans use formula-based estimates and fixed projection assumptions. All calculations run in the browser; no backend is required.
+Plans use formula-based estimates and fixed projection assumptions. Nutrition calculations run in the browser. Paid PDF export uses a Cloudflare Worker for payment verification and PDF generation.
 
 ## Regional meals, body-fat guide and PDF export
 
 - Choose a shopping region in the Diet step. It filters sample meals and food suggestions while preserving the selected diet. Global / other keeps the full food selection. Region and the generated plan are saved locally.
 - Open the optional body-fat visual guide in Body stats. Reference-inspired character illustrations offer rough adult ranges for each sex; selecting one enables the slider. These are schematic references, not validated measurements. Switching sex clears a visual estimate.
-- Generate a plan, optionally shuffle the sample meals, then select **Download PDF**. The PDF exports the last generated result and currently displayed meals, including targets, projections, a shopping checklist, food guidance and estimate notes. It uses selectable text and paginated tables; no print dialog or WebGL capture is required.
+- Generate a plan, optionally shuffle the sample meals, then select **Basic PDF · Free** for daily calories only or **Full plan PDF · ₹9** for the complete report after verified payment. The full report is generated server-side and is never shipped in the browser bundle. Each checkout covers the plan snapshot at checkout; the same paid snapshot can be downloaded again in the same browser for 24 hours. Plan data is processed transiently and is not stored in a database. Razorpay retains payment records. The full PDF exports the last generated result and currently displayed meals, including targets, projections, a shopping checklist, food guidance and estimate notes. It uses selectable text and paginated tables; no print dialog or WebGL capture is required.
 - `npm test` checks region/diet compatibility across meal counts, finite meal quantities, shopping aggregation and PDF generation. `npm run build` verifies the production bundle.
 
 The body-fat artwork is bundled at `public/images/bodyfat-reference-sheet.png`. It was generated with the built-in image-generation tool, using the supplied poster as a style reference. Prompt: a regular six-column, two-row sheet of consistent adult male and female anime-style characters, progressively fuller body shapes, neutral front-facing poses, black gym clothing, flat cool-gray background, no text or labels. The guide labels these images as illustrative and not clinically validated.
@@ -65,3 +65,20 @@ Calculations are implemented in `src/calc.js`: the published Mifflin–St Jeor a
 `src/food-data.js` contains 33 curated records imported from USDA FoodData Central Foundation Foods 2025-12-18 and SR Legacy 2018-04. Each record carries its FDC ID, dataset/version, retrieval date, preparation state, serving weight, energy, macros, fibre and available micronutrients; unavailable values remain `null`. Regenerate it from official JSON downloads with `scripts/import-food-data.mjs`. The IFCT 2017 PDF was obtained but no Indian values were imported because extraction could not be independently verified.
 
 `src/recipes.js` implements edible-weight, nutrient-retention and final-yield recipe calculations following FAO/INFOODS structure. Standardized Indian dishes are not published until their ingredient records, measured yields and applicable retention factors are verified. See [EVIDENCE.md](EVIDENCE.md) and `data/import-manifest.json` for the rule-to-source map and exact import status.
+
+## Paid PDF setup (Cloudflare + Razorpay)
+
+Set these secrets on the `macro-forge` Worker using Cloudflare **Settings → Variables and Secrets**, or run each command and enter the value at its prompt:
+
+```sh
+npx wrangler secret put RAZORPAY_KEY_ID
+npx wrangler secret put RAZORPAY_KEY_SECRET
+```
+
+Use a matching Razorpay live key pair for production. Never put the secret in Vite variables, source files, or chat. For local testing, place a Razorpay test pair in ignored `.dev.vars` (see `.dev.vars.example`). Test and live payments are separate.
+
+The existing shared ₹9 payment link is a single payment request. The app instead creates a separate ₹9 link for each plan checkout, with partial payments disabled. A signed HttpOnly cookie binds that checkout to a SHA-256 digest of the purchased snapshot. The Worker fetches the link from Razorpay and checks its identity, paid status, INR currency, exact 900-paise amount and plan digest before rendering `/api/pdf`. Closing a payment window, a client-side success flag or a forged receipt cannot unlock the PDF. Reopening checkout reuses the pending or already-paid link for the same plan.
+
+No plan/profile/check-in data is sent to Razorpay. Only the checkout reference and one-way plan digest are attached. Plan data is sent to the Worker after payment for in-memory PDF generation; request bodies must never be logged or persisted. Payment sessions last 24 hours in the same browser; changing the plan, clearing browser cookies/storage or changing devices prevents recovery. The dialog explains this before payment. No database or webhook is required.
+
+When credentials are absent, checkout returns 503 with a useful message and free calorie export remains available. Run `npm test` and `npm run build` before `npm run deploy`. Test successful, cancelled and pending payments with Razorpay test credentials before activating live checkout.

@@ -553,9 +553,26 @@
 
         <div class="results-actions">
           <button class="btn ghost" id="editBtn" type="button">← Edit my data</button>
-          <button class="btn primary" id="printBtn" type="button">Download PDF</button>
+          <button class="btn ghost" id="basicPrintBtn" type="button">Basic PDF · Free</button>
+          <button class="btn primary" id="printBtn" type="button">Full plan PDF · ₹9</button>
         </div>
         <p id="exportStatus" class="hint export-status" role="status" aria-live="polite"></p>
+        <dialog id="pdfPaymentDialog" class="pdf-payment" aria-labelledby="pdfPaymentTitle" aria-describedby="pdfPaymentDescription pdfStorageWarning">
+          <button class="pdf-payment-close" id="closePdfPayment" type="button" aria-label="Close payment popup">×</button>
+          <p class="eyebrow">Keep your plan</p>
+          <h2 id="pdfPaymentTitle">Your complete plan, saved.</h2>
+          <p id="pdfPaymentDescription">Pay ₹9 once to download this plan with your macros, training routine, meals, shopping list, projections and guides. Your full PDF unlocks after Razorpay confirms payment.</p>
+          <p id="pdfStorageWarning" class="pdf-storage-warning"><b>Save a copy before you leave.</b> MacroForge does not store your plan or check-ins in a database. They stay in this browser and may be lost if you clear browser storage, use private browsing, or change devices. Downloading a PDF helps you keep a copy. Razorpay stores payment records separately.</p>
+          <p class="hint">Checkout opens in a separate payment window. Keep this plan open, then return here after paying. This purchase covers the plan shown when you start checkout; keep the same browser and download within 24 hours. Plan data is sent to our server only to generate your paid PDF and is not saved in a database.</p>
+          <p id="pdfPaymentStatus" class="hint" role="status" aria-live="polite"></p>
+          <div class="pdf-payment-actions">
+            <button class="btn primary" id="payPdfBtn" type="button">Pay ₹9 & unlock PDF</button>
+            <a id="pdfCheckoutLink" class="btn ghost" target="_blank" rel="noopener noreferrer" hidden>Open payment window</a>
+            <button class="btn ghost" id="verifyPdfPayment" type="button" hidden>Check payment</button>
+            <button class="btn primary" id="downloadPaidPdf" type="button" hidden>Download full PDF</button>
+            <button class="btn ghost" id="dialogBasicPdf" type="button">Daily calories PDF · Free</button>
+          </div>
+        </dialog>
         <p class="disclaimer">
           Estimates only — not medical advice. Re‑check every 2–3 weeks and adjust calories by ±100–200 kcal based
           on your real‑world progress.

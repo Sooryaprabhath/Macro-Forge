@@ -1,4 +1,5 @@
 import './style.css';
+import { setupPdfDownloads } from './pdf-downloads.js';
 import { createBackground } from './scene.js';
 import { createMacroRing, MACRO_COLORS } from './ring3d.js';
 import { calculate, paceHint } from './calc.js';
@@ -427,9 +428,6 @@ function generate(scroll) {
 
   $('#results').classList.remove('hidden');
   $$('.nav-results').forEach((link) => link.classList.remove('hidden'));
-  // Begin fetching the large export dependency while the result renders, so an
-  // iPhone tap later does not have to wait for a network import.
-  loadPdfModule().catch(() => { /* The download button reports a retryable error if this fails. */ });
   if (!ring) ring = createMacroRing($('#ring3d'));
   ring.set(r);
   bg.pulse();
@@ -750,58 +748,7 @@ $('#shuffleBtn').addEventListener('click', () => {
 });
 
 $('#editBtn').addEventListener('click', () => showStep(0));
-let pdfModulePromise;
-function loadPdfModule() {
-  pdfModulePromise ||= import('./pdf.js');
-  return pdfModulePromise;
-}
-// On phones this starts loading the export code before the user taps Download.
-// That keeps the actual tap available for Safari/Chrome's new-tab action.
-['pointerenter', 'pointerdown', 'touchstart', 'focus'].forEach((eventName) => $('#printBtn').addEventListener(eventName, loadPdfModule, { once: true, passive: true }));
-$('#printBtn').addEventListener('click', async () => {
-  if (!state.result || !state.sampleDay) return;
-  const button = $('#printBtn');
-  const result = state.result;
-  const day = state.sampleDay;
-  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  // iOS browsers require a new tab to be created during the tap itself. Calling
-  // doc.save() after an awaited module load is commonly blocked there.
-  const pdfWindow = isiOS ? window.open('about:blank', '_blank') : null;
-  button.disabled = true;
-  button.textContent = 'Preparing PDF…';
-  $('#exportStatus').textContent = 'Preparing your current plan and sample meals…';
-  try {
-    const { createPlanPdf } = await loadPdfModule();
-    const doc = createPlanPdf(result, day);
-    if (isiOS) {
-      const pdfBlob = doc.output('blob');
-      if (!pdfBlob || !pdfBlob.size) throw new Error('PDF output was empty');
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      if (pdfWindow) {
-        pdfWindow.location.href = pdfUrl;
-      } else {
-        // iOS can reject a new-tab request despite a direct touch. Opening the
-        // Blob in this tab still lets the user use Share -> Save to Files.
-        window.location.assign(pdfUrl);
-      }
-      setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
-      $('#exportStatus').textContent = pdfWindow
-        ? 'Your PDF opened in a new tab. Use Share → Save to Files to keep it on your iPhone.'
-        : 'Your PDF is opening here. Use Share → Save to Files, then use Back to return to MacroForge.';
-    } else {
-      doc.save(`MacroForge-${result.input.goal}-${result.input.region}-${new Date().toISOString().slice(0, 10)}.pdf`);
-      $('#exportStatus').textContent = 'PDF download started. It contains your last generated plan and displayed sample day.';
-    }
-  } catch (error) {
-    pdfWindow?.close();
-    console.error('PDF export failed', error);
-    $('#exportStatus').textContent = 'Could not create the PDF. Please try again after the plan has finished loading.';
-  } finally {
-    button.disabled = false;
-    button.textContent = 'Download PDF';
-  }
-});
+setupPdfDownloads(() => state.result && state.sampleDay ? { result: state.result, day: state.sampleDay } : null);
 
 // ---------- Persistence ----------
 const INPUT_IDS = ['age', 'weight', 'heightCm', 'heightFt', 'heightFtIn', 'bodyFat', 'days', 'target', 'meals', 'region', 'applicability', 'excludedFoods'];
