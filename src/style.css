@@ -367,9 +367,8 @@ input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 .mc.f { color: var(--f); background: rgba(238, 241, 248, 0.1); }
 .muted { color: var(--muted); }
 
-.meals { grid-column: span 5; display: flex; flex-direction: column; }
-.meals .meal-list { flex: 1; }
-.meals .meal { flex: 1; }
+/* Keep meal cards at their content height when the adjacent routine expands. */
+.meals { grid-column: span 5; align-self: start; }
 .meal-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
 .meal { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; background: rgba(0,0,0,.28); border: 1px solid var(--line); animation: rise 0.8s calc(var(--i) * 0.08s) var(--ease) both; transition: .3s var(--ease); }
 .meal:hover { border-color: var(--a); transform: translateX(4px); }
